@@ -1,0 +1,6 @@
+defaults:
+  - _self_
+  - post_encoder: post_encoder
+  - classifier: simple_classifier
+
+_target_: ectil.models.components.mean_mil.MeanMIL

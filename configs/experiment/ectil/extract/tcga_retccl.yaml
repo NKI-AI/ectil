@@ -1,0 +1,19 @@
+# @package _global_
+
+defaults:
+  - /datamodule/dataset@datamodule: tcga
+  - /datamodule/encoder@datamodule: retccl  # set mpp, tile size, and transform set
+  - override /datamodule: dlup_dataset
+  - override /model: retccl_extractor
+  - override /model/h5_writer: tcga_dlup_h5_writer # set tcga dlup writer
+
+datamodule:
+  image_root_dir: ${paths.tcga_brca_images_root}
+  image_glob: ${paths.tcga_brca_images_glob}
+
+model:
+  h5_writer:
+    h5_root_dir: ${paths.h5_dump_dir} # save h5s here
+
+task_name: "extract/tcga/retccl" # track with this task name
+

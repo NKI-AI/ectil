@@ -1,0 +1,18 @@
+# @package _global_
+
+defaults:
+  - mil_sweep_regression
+
+hydra:
+  sweeper:
+    n_trials: 80
+    params:
+      variables.mil_hidden_features: choice(128, 256, 512)
+      model.net.attention.hidden_features: choice(256, 128)
+      model.net.post_encoder._args_.0.p: choice(0, 0.1, 0.4)
+      model.net.post_encoder._args_.1.p: choice(0, 0.1, 0.4)
+      model.net.classifier._args_.0.p: choice(0, 0.1, 0.4)
+      model.net.classifier._args_.1.p: choice(0, 0.1, 0.4)
+      model.optimizer.lr: choice(0.00001, 0.00005, 0.0001, 0.0005, 0.001, 0.005, 0.01)
+      model.optimizer.weight_decay: choice(0.00001, 0.00005, 0.0001, 0.0005, 0.001, 0.005, 0.01)
+      datamodule.batch_size: choice(8, 16, 32)

@@ -1,0 +1,11 @@
+_target_: torch.nn.Sequential
+_args_:
+  - _target_: torch.nn.Dropout
+    p: 0.2
+  - _target_: torch.nn.Dropout1d
+    p: 0.2
+  - _target_: torch.nn.Linear
+    in_features: ${variables.mil_in_features}
+    out_features: ${variables.mil_hidden_features}
+  - _target_: torch.nn.ReLU
+

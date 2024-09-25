@@ -1,0 +1,402 @@
+---
+title: "ECTIL: prognostic PARADIGM analysis"
+author: "Yoni Schrirris, Renee Menezes"
+date: "`r Sys.Date()`"
+params:
+  dataset_file: "/path/to/data.RData"
+  prediction_column: "ectil_label_column"
+output:
+    html_document:
+    code_folding: hide
+toc: true
+toc_float: true
+toc_collapsed: true
+toc_depth: 3  
+---
+
+This is part of the prognostic analysis of "ECTIL: Label-efficient Computational Tumour Infiltrating Lymphocyte (TIL) assessment in breast cancer: Multicentre validation in 2,340 patients with breast cancer"
+
+This file performs the survival analysis on PARADIGM using any of the 
+predicted scores, and compares it to the pathologist's scores.
+
+Loading the required packages
+```{r}
+library(ggplot2)
+if (!require(cmprsk)) {
+  install.packages("cmprsk")
+}
+if (!require("xtable")){
+    install.packages("xtable")
+}
+
+# For tidying the tables and making them easily copy pastable.
+if(!require("tidyr")){
+    install.packages("tidyr")
+}
+
+# Same, also for cox reg. tables
+if(!require("dplyr")){
+    install.packages("dplyr")
+}
+
+# Same, also for cox reg. tables
+if(!require("ggsurvfit")){
+    install.packages("ggsurvfit")
+}
+library(ggsurvfit)
+
+if (!require("survminer")) {
+    install.packages("survminer")
+}
+
+library("survminer")
+library("dplyr")
+library("xtable")
+library(cmprsk) # Competing risk analyses
+library(gplots) # nicer plotting
+library(readxl) # Reading excels
+library(survminer)
+library(ggplot2)
+library(gridExtra) # tableGrob
+library(survival) # necessary for all survival analyses
+library(broom) # Nice for repackaging the survival results into a table
+if (!require("data.table")) {
+    install.packages("data.table")
+}
+library(data.table) # Nice for ":=" operator when reorganizing our tables for the cox regressions 
+```
+
+Load the dataset with all scores. This is then found in `data.all.scores`.
+These can not be publicly shared, hence the analysis can only be reproduced within the Netherlands Cancer Institute.
+```{r}
+load(params$dataset_file)
+```
+
+We reproduce the analysis from 
+de Jong VMT, Wang Y, ter Hoeve ND, et al. Prognostic Value of Stromal 
+Tumor-Infiltrating Lymphocytes in Young, Node-Negative, Triple-Negative Breast 
+Cancer Patients Who Did Not Receive (neo)Adjuvant Systemic Therapy. JCO 2022; 
+JCO.21.01536.
+
+Results may differ slightly since we only use the patients that we have WSIs for and were able
+to predict a score for, hence we have fewer patients.
+
+Definition of time and event variables
+```{r}
+# Define a time variable
+data.all.scores$time_variable = as.numeric(as.Date(data.all.scores$date.last.follow.up, format="%d/%m/%Y") - as.Date(data.all.scores$date_diagnosis, format="%d/%m/%Y"))
+
+# Define the event variable
+data.all.scores$event_variable = data.all.scores$surv.stat
+
+# For OS we will treat 2 (lost to follow-up) as censored
+data.all.scores$event_variable[data.all.scores$event_variable==2] = 0
+
+# Define a response variable
+data.all.scores$response_variable = Surv(time=data.all.scores$time_variable, event=data.all.scores$event_variable)
+
+# From days to years
+data.all.scores$time_variable = data.all.scores$time_variable / 365
+```
+
+Set up a function to fit the multivariate coxph
+```{r}
+fitCoxPHModel <- function(data, variable_of_interest, variates) {
+  coxph(as.formula(paste("response_variable ~", variable_of_interest, variates
+                         )
+                   ), 
+        data = data)
+}
+```
+
+All cox regressions; univariates with pathologist and model predictions,
+multivare with no tils
+multivariate with pathologist and mdoel predictions
+```{r}
+
+multivariate = "+
+                trinarized_tumor_stage +
+                binarized_grade +
+                trinarized_histology +
+                  `Lymphovascular.invasion` + 
+                  radiotherapy_surgery"
+
+
+univariate_fit_pathologist_stils <- fitCoxPHModel(data.all.scores, "increment_stils_10", "")
+univariate_fit_weakstil_small <- fitCoxPHModel(data.all.scores, "increment_weakstils_small_10", "")
+univariate_fit_weakstil_large_all <- fitCoxPHModel(data.all.scores, "increment_weakstils_large_all_10", "")
+univariate_fit_weakstil_large_tnbc <- fitCoxPHModel(data.all.scores, "increment_weakstils_large_tnbc_10", "")
+
+
+multivariate_fit_no_stils <- fitCoxPHModel(data.all.scores, "", multivariate)
+multivariate_fit_pathologist_stils <- fitCoxPHModel(data.all.scores, "increment_stils_10", multivariate)
+multivariate_fit_weakstil_small <- fitCoxPHModel(data.all.scores, "increment_weakstils_small_10", multivariate)
+multivariate_fit_weakstil_large_all <- fitCoxPHModel(data.all.scores, "increment_weakstils_large_all_10", multivariate)
+multivariate_fit_weakstil_large_tnbc <- fitCoxPHModel(data.all.scores, "increment_weakstils_large_tnbc_10", multivariate)
+```
+
+All models are fit now, but not shown.
+
+We process them to format them in paper format.
+
+```{r}
+# Assuming 'fit' is your CoxPH model
+
+processCoxPHModel <- function(fit, column_name, add_to = NULL) {
+    conf_int <- summary(fit)$conf.int
+    tidy_fit <- tidy(fit) # Comes from the broom package. Nicely represents this stuff in df.
+    # Add confidence intervals and formatted output
+    tidy_fit <- tidy_fit %>%
+    mutate(exp_coef = exp(estimate),  # Exponentiated estimates
+          se = std.error,
+          lower_ci = conf_int[, "lower .95"],
+          upper_ci = conf_int[, "upper .95"],
+          p_signif = case_when(
+            p.value < .001 ~ "p<0.001",
+            p.value < .01 ~ "p<0.01",
+            p.value < .05 ~ "p<0.05",
+            TRUE ~ ""
+          ),
+          exp_coef = format(round(exp_coef, 2), nsmall = 2),  # Round to 2 decimals
+          lower_ci = format(round(lower_ci, 2), nsmall = 2),
+          upper_ci = format(round(upper_ci, 2), nsmall = 2),
+          exp_coef_p = ifelse(p_signif == "", 
+                              paste0(exp_coef, " (", lower_ci, " to ", upper_ci, ")"), 
+                              paste0(exp_coef, " (", lower_ci, " to ", upper_ci, ", ", p_signif, ")"))
+    )
+    # Calculate the Concordance Index (C-index)
+    c_index <- concordance(fit)$concordance
+    c_index_se <- sqrt(concordance(fit)$var)
+    
+    # Compute the significance of it differing from 0.5
+    null_value = 0.5
+    Z = (c_index - null_value) / c_index_se
+    p_value = (1-pnorm(abs(Z))) # One-sided
+    
+    p_signif = case_when(
+           p_value < .001 ~ " (p<0.001)", # set significane levels
+           p_value < .01 ~ " (p<0.01)",
+           p_value < .05 ~ " (p<0.05)",
+           TRUE ~ ""  # No asterisk for p >= 0.05
+    )
+    
+    c_index_formatted <- paste0(sprintf("%.2f", c_index), p_signif)
+    
+    c_index_row <- tibble(variate = "Concordance Index", !!column_name := c_index_formatted)
+
+    tidy_fit <- tidy_fit %>%
+        select(variate = term,  !!column_name := exp_coef_p) # Term is how it is called normally. We call it "variate".
+
+    extra_row <- tibble(variate = "Concordance Index", !!column_name := as.character(c_index_formatted))
+    
+    tidy_fit <- bind_rows(tidy_fit, extra_row)
+
+    if (!is.null(add_to)){
+        add_to[[column_name]] = tidy_fit[[column_name]]
+        return(add_to)
+    } else{
+        return(tidy_fit)
+    }
+}
+
+# We produce a nice table, and add every extra model to it to have a complete
+# cox regression overview.
+tidy_fit = processCoxPHModel(multivariate_fit_no_stils, "Clinical")
+
+tidy_fit # Show it in Rmd file
+
+tidy_fit = processCoxPHModel(multivariate_fit_pathologist_stils, "Pathologist sTIL")
+tidy_fit = processCoxPHModel(multivariate_fit_weakstil_small, "ECTIL-TCGA", add_to=tidy_fit)
+tidy_fit = processCoxPHModel(multivariate_fit_weakstil_large_all, "ECTIL-all", add_to=tidy_fit)
+tidy_fit = processCoxPHModel(multivariate_fit_weakstil_large_tnbc, "ECTIL-TNBC", add_to=tidy_fit)
+
+
+tidy_fit # Show it in Rmd file
+
+tidy_fit = processCoxPHModel(univariate_fit_pathologist_stils, "sTIL-gt")
+tidy_fit = processCoxPHModel(univariate_fit_weakstil_small, "ECTIL-TCGA", add_to=tidy_fit)
+tidy_fit = processCoxPHModel(univariate_fit_weakstil_large_all, "ECTIL-all", add_to=tidy_fit)
+tidy_fit = processCoxPHModel(univariate_fit_weakstil_large_tnbc, "ECTIL-TNBC", add_to=tidy_fit)
+
+tidy_fit # Show it in Rmd file
+```
+
+
+Plot all KM plots
+```{r}
+# Assuming you have already installed and loaded the survminer and ggplot2 packages
+# Plot survival curves for each level of stil_category as defined before
+# Adjusting the Kaplan-Meier plot for better aesthetics
+
+plot_custom_km = function(fit, group_labels, group_palette, filename){
+    # Generate Kaplan-Meier plot with basic customization
+    km_plot <- ggsurvplot(
+      fit, 
+      risk.table = "nrisk_cumcensor", # Show risk table
+      tables.y.text = FALSE, 
+      tables.theme = theme_cleantable(),
+      pval = FALSE,  # Do not show the significance
+      pval.coord = c(0,0), # p-value location
+      conf.int = FALSE, # Do not distract too much with the confidence interval
+      palette = group_palette, # Set the colours as given by user
+      xlab = "Time (Years)", 
+      ylab = "OS",
+      xlim = c(0, 15), # Show for 15 years
+      break.time.by = 1, # Show tick every 1 year
+      ggtheme = theme_minimal() + # Set styling
+        theme(
+          plot.title = element_text(size = 14, face = "bold", color = "black"),
+          axis.title.x = element_text(size = 12, face = "bold", color = "black"),
+          axis.title.y = element_text(size = 12, face = "bold", color = "black"),
+          axis.text.x = element_text(size = 10, face = "plain", color = "black"),
+          axis.text.y = element_text(size = 10, face = "plain", color = "black"),
+          panel.grid.major = element_blank(), #disable grid
+          panel.grid.minor = element_blank(), # disable grid
+          axis.line = element_line(color = "black"),
+        ),
+      risk.table.height = 0.2, # Make the table readable
+      size = 0.6, # Adjust line thickness
+      risk.table.fontsize = 3, # Adjust font size for the risk table
+      legend.labs = group_labels, # Customize legend labels if needed,
+      legend = c(0.85,0.2),
+      legend.title=""
+    )
+    
+    # Make the risk table super minimal
+    km_plot$table <- km_plot$table + theme(
+        plot.title = element_text(size = 8, face="plain"),
+        )
+
+    km_plot$table <- km_plot$table + labs(title = "No. at risk (censored)")
+    
+    ## Add the table with CIs
+    
+    group_names <- names(fit$strata)
+
+    # Extract and format survival probabilities for each time point
+    get_surv_at_times <- function(fit_obj, time_points) {
+      # Initialize a list to hold survival data for each group
+      surv_data <- list()
+      surv_info <- summary(fit_obj, times = time_points, censored = TRUE)
+      # Loop over each group in the fit object
+      for (j in 1:length(group_names)) {
+        # Format the survival, lower, and upper CI data
+        formatted_surv_info <- sapply(1:length(time_points), function(i) {
+          idx = (j-1)*3+i # Get specific items for the table, and format them
+          sprintf("%.1f (%.1f to %.1f)", surv_info$surv[idx] * 100, surv_info$lower[idx] * 100, surv_info$upper[idx] * 100)
+        })
+        
+        # Add the formatted survival information to the list
+        group_name=group_names[j]
+        surv_data[[group_name]] <- formatted_surv_info
+      }
+      return(surv_data)
+    }
+    
+    # Specify time points (years converted to days)
+    time_points <- c(3, 10, 15)
+    
+    # Get survival data for each group at specified time points
+    survival_data <- get_surv_at_times(fit, time_points)
+    
+    # Create a dataframe for the custom table
+    custom_table <- data.frame(
+      Group = group_names,
+      `3 Years` = sapply(group_names, function(g) survival_data[[g]][1]),
+      `10 Years` = sapply(group_names, function(g) survival_data[[g]][2]),
+      `15 Years` = sapply(group_names, function(g) survival_data[[g]][3])
+    )
+    
+    names(custom_table) = c("TILs level", "3 Years (95% CI)", "10 Years (95% CI)", "15 Years (95% CI)")
+    custom_table$`TILs level` = group_labels
+    
+    
+    
+    # Starting base theme
+    table_theme <- ttheme_default(
+      core = list(
+        fg_params = list(hjust = 0, x = 0.1, col="black"), # Foreground parameters for text alignment
+        bg_params = list(fill = "white", col = "black") # Background fill and border color
+      ),
+      colhead = list(
+        fg_params = list(hjust = 0, x = 0.1), # Column header text alignment
+        bg_params = list(fill = "white", col = "black") # Column header background and border
+      ),
+      base_size = 6, # Base font size for text in the table
+      padding = unit(c(4, 4), "mm"), # Padding inside cells
+      spacing = unit(c(2, 2), "mm") # Spacing between cells
+    )
+    colors_for_a <- group_palette # Example colors for each cell of 1st column
+
+    # Adjust the theme to apply these colors
+    white_colors = c("white", "white", "white")
+    table_theme$core$bg_params$fill <- rep("white", ncol(custom_table) * nrow(custom_table))
+    table_theme$core$bg_params$fill[seq(1, by = 1, length.out = nrow(custom_table))] <- colors_for_a
+    table_theme$core$fg_params$col[seq(1, by = 1, length.out = nrow(custom_table))] <-  rep("white", length(colors_for_a))
+    table_theme$core$fg_params$col[seq(nrow(custom_table)+1, by = 1, length.out = nrow(custom_table)*ncol(custom_table))] <-  rep("black", nrow(custom_table) * ncol(custom_table) - nrow(custom_table))
+    table_theme$core$bg_params$col <- "black" # Ensure border colors are set to black
+        
+    # Create the table grob
+    table_grob <- tableGrob(custom_table, theme = table_theme, rows=NULL)
+    
+    # Add the table grob to the KM plot, adjusting position
+    km_plot$plot <- km_plot$plot +
+      annotation_custom(
+        grob = table_grob,
+        xmin = unit(5, "npc"), ymin = unit(0.11, "npc"), xmax = unit(5.2, "npc"), ymax = unit(0.26, "npc")
+      )
+    # Set width, height DPI. If this is changed, will likely have to adjust
+    # The line thickness and font size and so on.
+    dpi=300
+    width= 600 * dpi/72
+    height = 500 * dpi/72
+    
+    print(km_plot)
+    dev.copy(png, filename = filename, width = width, height = height, res=dpi)
+    dev.off()
+}
+```
+
+Standard KM plot with pathologist scores with normal cutoffs
+```{r}
+if (!require("gridExtra")) install.packages("gridExtra")
+library(gridExtra)
+desired_order = c("<30", "30-74", ">=75")
+fit <- survfit(Surv(time_variable, event_variable) ~ factor(pathologist_til_cutoff, levels=desired_order), data = data.all.scores)
+group_labels=c("TILs < 30%", "TILs 30% to < 75%", "TILs ≥ 75%")
+group_palette=c("darkblue", "darkred", "darkgreen")
+filename="km_pathologist_score_standard.png"
+plot_custom_km(fit, group_labels, group_palette, filename)
+```
+
+KM Plot for pathologist score w/ median cutoffs
+```{r}
+median_til_score_pathologist = quantile(data.all.scores$gtruth, probs=0.5)
+data.all.scores$pathologist_til_cutoff_median <- ifelse(data.all.scores$gtruth <= median_til_score_pathologist, paste0("TILs < ", median_til_score_pathologist), paste0("TILs ≥ ", median_til_score_pathologist))
+
+desired_order = c(paste0("TILs < ", median_til_score_pathologist), paste0("TILs ≥ ", median_til_score_pathologist))
+fit <- survfit(Surv(time_variable, event_variable) ~ factor(pathologist_til_cutoff_median, levels=desired_order), data = data.all.scores)
+
+group_labels=desired_order
+group_palette=c("darkred", "darkgreen")
+filename="km_pathologist_score_median.png"
+plot_custom_km(fit, group_labels, group_palette, filename)
+```
+
+
+KM plot with ECTIL score with median cutoff
+```{r}
+median_ectil_score = round(quantile(data.all.scores[[params$prediction_column]], probs=0.5))
+
+data.all.scores$binary_prediction <- ifelse(data.all.scores[[params$prediction_column]] < median_ectil_score, paste0("ECTILs < ", median_ectil_score), paste0("ECTILs ≥ ", median_ectil_score))
+
+desired_order = c(paste0("ECTILs < ", median_ectil_score), paste0("ECTILs ≥ ", median_ectil_score))
+
+fit <- survfit(Surv(time_variable, event_variable) ~ factor(binary_prediction, levels=desired_order), data = data.all.scores)
+
+group_labels=desired_order
+group_palette=c("darkred", "darkgreen")
+filename=paste0("km_ectil_", params$prediction_column, "score_median.png")
+plot_custom_km(fit, group_labels, group_palette, filename)
+```
+

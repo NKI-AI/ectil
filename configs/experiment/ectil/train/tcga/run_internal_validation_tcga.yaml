@@ -1,0 +1,82 @@
+# @package _global_
+
+# The below parameters come from several hparam searches
+# These were performed on 2023/04/12 and 2023/04/13
+# We picked the model with a high explained variance at the end, which had a smooth training curve
+# See configs/hparams_search/mil_sweep_regression_stil.yaml for the set-up
+
+defaults:
+  - /model/criterion: mse.yaml
+  - override /datamodule: h5.yaml
+  - override /model: h5_regression.yaml
+  - override /callbacks: default_regression.yaml
+  - override /trainer: gpu.yaml
+  - override /logger: many_loggers.yaml
+
+test: True
+task_name: run_internal_validation_tcga
+tags: ["dev", "stil", "gated_ab_mil", "regression"]
+seed: 12345
+
+logger:
+  mlflow:
+    experiment_name: ${task_name}
+    run_name:
+
+trainer:
+  min_epochs: 1
+  max_epochs: 100
+  gradient_clip_val: 0.5
+  accumulate_grad_batches: 1
+  log_every_n_steps: 10
+
+model:
+  optimizer:
+    lr: 0.0001
+    weight_decay: 0.0006
+  net:
+    _target_: ectil.models.components.mean_mil.MeanMIL
+    post_encoder:
+      _target_: torch.nn.Sequential
+      _args_:
+      - _target_: torch.nn.Dropout
+        p: 0
+      - _target_: torch.nn.Dropout1d
+        p: 0
+      - _target_: torch.nn.Linear
+        in_features: ${variables.mil_in_features}
+        out_features: ${variables.mil_hidden_features}
+      - _target_: torch.nn.ReLU
+    classifier:
+      _target_: torch.nn.Sequential
+      _args_:
+      - _target_: torch.nn.Dropout
+        p: 0.4
+      - _target_: torch.nn.Dropout1d
+        p: 0.1
+      - _target_: torch.nn.Linear
+        in_features: ${variables.mil_hidden_features}
+        out_features: 1
+      - _target_: torch.nn.Sigmoid
+    attention:
+      _target_: ectil.models.components.attention.GatedAttention
+      in_features: ${variables.mil_hidden_features}
+      hidden_features: 128
+
+datamodule:
+  _target_: ectil.datamodules.h5_datamodule.EctilH5DataModule
+  h5_type: ectil
+  batch_size: 16
+  target_transform:
+    _target_: ectil.datamodules.components.h5_features.DivideTargetTransform
+  label_column: "tils_score"
+  patient_column: "T-number"
+  clini_file: "${paths.clini_file}"
+  root_dir: ${paths.h5_root_dir}
+  train_paths: "${paths.datamodule_train_paths}"
+  val_paths: "${paths.datamodule_val_paths}"
+  test_paths: "${paths.datamodule_test_paths}"
+  store_dataset_in_memory: False
+  collate_fn:
+      _target_: ectil.datamodules.components.variable_size_collate.VariableSizeCollator
+

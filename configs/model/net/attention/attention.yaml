@@ -1,0 +1,3 @@
+_target_ : ectil.models.components.attention.Attention
+in_features: ${variables.mil_hidden_features}
+hidden_features: ${variables.attention_hidden_features}

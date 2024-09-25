@@ -1,0 +1,2 @@
+log_scatter_plot:
+  _target_: ectil.callbacks.logging.LogScatterPlot

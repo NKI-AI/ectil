@@ -1,0 +1,2 @@
+image_root_dir: ${paths.tcga_brca_images_root}
+image_glob: ${paths.tcga_brca_images_glob}

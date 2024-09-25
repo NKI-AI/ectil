@@ -1,0 +1,5 @@
+_target_: ectil.datamodules.components.dlup_dataset.DLUPDataLoaders
+mask_cache_dir: ${paths.mask_cache_dir}
+mask_function: fesi
+num_workers: 0
+batch_size: 4

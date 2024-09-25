@@ -1,0 +1,11 @@
+# @package _global_
+
+defaults:
+  - mil_sweep
+
+optimized_metric: "val/explained_variance_best"
+
+hydra:
+  sweeper:
+    direction: maximize
+

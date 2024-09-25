@@ -1,0 +1,343 @@
+Study,T-number,Medical center,train_fold_0,val_fold_0,test_fold_0,train_fold_1,val_fold_1,test_fold_1,train_fold_2,val_fold_2,test_fold_2,train_fold_3,val_fold_3,test_fold_3,train_fold_4,val_fold_4,test_fold_4
+TCGA,TCGA-A1-A0SB,UCSF,1,0,0,0,0,1,1,0,0,1,0,0,0,1,0
+TCGA,TCGA-A1-A0SH,UCSF,1,0,0,0,0,1,1,0,0,1,0,0,0,1,0
+TCGA,TCGA-A1-A0SJ,UCSF,1,0,0,0,0,1,1,0,0,1,0,0,0,1,0
+TCGA,TCGA-A1-A0SK,UCSF,1,0,0,0,0,1,1,0,0,1,0,0,0,1,0
+TCGA,TCGA-A1-A0SM,UCSF,1,0,0,0,0,1,1,0,0,1,0,0,0,1,0
+TCGA,TCGA-A1-A0SP,UCSF,1,0,0,0,0,1,1,0,0,1,0,0,0,1,0
+TCGA,TCGA-A1-A0SQ,UCSF,1,0,0,0,0,1,1,0,0,1,0,0,0,1,0
+TCGA,TCGA-A2-A04P,Walter Reed,1,0,0,1,0,0,0,0,1,1,0,0,1,0,0
+TCGA,TCGA-A2-A04Q,Walter Reed,1,0,0,1,0,0,0,0,1,1,0,0,1,0,0
+TCGA,TCGA-A2-A04R,Walter Reed,1,0,0,1,0,0,0,0,1,1,0,0,1,0,0
+TCGA,TCGA-A2-A04T,Walter Reed,1,0,0,1,0,0,0,0,1,1,0,0,1,0,0
+TCGA,TCGA-A2-A04U,Walter Reed,1,0,0,1,0,0,0,0,1,1,0,0,1,0,0
+TCGA,TCGA-A2-A04V,Walter Reed,1,0,0,1,0,0,0,0,1,1,0,0,1,0,0
+TCGA,TCGA-A2-A04W,Walter Reed,1,0,0,1,0,0,0,0,1,1,0,0,1,0,0
+TCGA,TCGA-A2-A04X,Walter Reed,1,0,0,1,0,0,0,0,1,1,0,0,1,0,0
+TCGA,TCGA-A2-A0CL,Walter Reed,1,0,0,1,0,0,0,0,1,1,0,0,1,0,0
+TCGA,TCGA-A2-A0CM,Walter Reed,1,0,0,1,0,0,0,0,1,1,0,0,1,0,0
+TCGA,TCGA-A2-A0CS,Walter Reed,1,0,0,1,0,0,0,0,1,1,0,0,1,0,0
+TCGA,TCGA-A2-A0CT,Walter Reed,1,0,0,1,0,0,0,0,1,1,0,0,1,0,0
+TCGA,TCGA-A2-A0CU,Walter Reed,1,0,0,1,0,0,0,0,1,1,0,0,1,0,0
+TCGA,TCGA-A2-A0CV,Walter Reed,1,0,0,1,0,0,0,0,1,1,0,0,1,0,0
+TCGA,TCGA-A2-A0CX,Walter Reed,1,0,0,1,0,0,0,0,1,1,0,0,1,0,0
+TCGA,TCGA-A2-A0CZ,Walter Reed,1,0,0,1,0,0,0,0,1,1,0,0,1,0,0
+TCGA,TCGA-A2-A0D0,Walter Reed,1,0,0,1,0,0,0,0,1,1,0,0,1,0,0
+TCGA,TCGA-A2-A0D3,Walter Reed,1,0,0,1,0,0,0,0,1,1,0,0,1,0,0
+TCGA,TCGA-A2-A0D4,Walter Reed,1,0,0,1,0,0,0,0,1,1,0,0,1,0,0
+TCGA,TCGA-A2-A0ET,Walter Reed,1,0,0,1,0,0,0,0,1,1,0,0,1,0,0
+TCGA,TCGA-A2-A0EU,Walter Reed,1,0,0,1,0,0,0,0,1,1,0,0,1,0,0
+TCGA,TCGA-A2-A0EV,Walter Reed,1,0,0,1,0,0,0,0,1,1,0,0,1,0,0
+TCGA,TCGA-A2-A0EX,Walter Reed,1,0,0,1,0,0,0,0,1,1,0,0,1,0,0
+TCGA,TCGA-A2-A0EY,Walter Reed,1,0,0,1,0,0,0,0,1,1,0,0,1,0,0
+TCGA,TCGA-A2-A0ST,Walter Reed,1,0,0,1,0,0,0,0,1,1,0,0,1,0,0
+TCGA,TCGA-A2-A0SU,Walter Reed,1,0,0,1,0,0,0,0,1,1,0,0,1,0,0
+TCGA,TCGA-A2-A0SV,Walter Reed,1,0,0,1,0,0,0,0,1,1,0,0,1,0,0
+TCGA,TCGA-A2-A0SX,Walter Reed,1,0,0,1,0,0,0,0,1,1,0,0,1,0,0
+TCGA,TCGA-A2-A0SY,Walter Reed,1,0,0,1,0,0,0,0,1,1,0,0,1,0,0
+TCGA,TCGA-A2-A0T0,Walter Reed,1,0,0,1,0,0,0,0,1,1,0,0,1,0,0
+TCGA,TCGA-A2-A0T1,Walter Reed,1,0,0,1,0,0,0,0,1,1,0,0,1,0,0
+TCGA,TCGA-A2-A0T2,Walter Reed,1,0,0,1,0,0,0,0,1,1,0,0,1,0,0
+TCGA,TCGA-A2-A0T3,Walter Reed,1,0,0,1,0,0,0,0,1,1,0,0,1,0,0
+TCGA,TCGA-A2-A0T4,Walter Reed,1,0,0,1,0,0,0,0,1,1,0,0,1,0,0
+TCGA,TCGA-A2-A0T5,Walter Reed,1,0,0,1,0,0,0,0,1,1,0,0,1,0,0
+TCGA,TCGA-A2-A0T7,Walter Reed,1,0,0,1,0,0,0,0,1,1,0,0,1,0,0
+TCGA,TCGA-A2-A0YC,Walter Reed,1,0,0,1,0,0,0,0,1,1,0,0,1,0,0
+TCGA,TCGA-A2-A0YE,Walter Reed,1,0,0,1,0,0,0,0,1,1,0,0,1,0,0
+TCGA,TCGA-A2-A0YG,Walter Reed,1,0,0,1,0,0,0,0,1,1,0,0,1,0,0
+TCGA,TCGA-A2-A0YH,Walter Reed,1,0,0,1,0,0,0,0,1,1,0,0,1,0,0
+TCGA,TCGA-A2-A0YJ,Walter Reed,1,0,0,1,0,0,0,0,1,1,0,0,1,0,0
+TCGA,TCGA-A2-A0YL,Walter Reed,1,0,0,1,0,0,0,0,1,1,0,0,1,0,0
+TCGA,TCGA-A2-A0YM,Walter Reed,1,0,0,1,0,0,0,0,1,1,0,0,1,0,0
+TCGA,TCGA-A2-A1G0,Walter Reed,1,0,0,1,0,0,0,0,1,1,0,0,1,0,0
+TCGA,TCGA-A2-A1G1,Walter Reed,1,0,0,1,0,0,0,0,1,1,0,0,1,0,0
+TCGA,TCGA-A2-A25A,Walter Reed,1,0,0,1,0,0,0,0,1,1,0,0,1,0,0
+TCGA,TCGA-A2-A25B,Walter Reed,1,0,0,1,0,0,0,0,1,1,0,0,1,0,0
+TCGA,TCGA-A2-A25F,Walter Reed,1,0,0,1,0,0,0,0,1,1,0,0,1,0,0
+TCGA,TCGA-A7-A0CD,Christiana Healthcare,1,0,0,1,0,0,0,0,1,1,0,0,1,0,0
+TCGA,TCGA-A7-A0CE,Christiana Healthcare,1,0,0,1,0,0,0,0,1,1,0,0,1,0,0
+TCGA,TCGA-A7-A0D9,Christiana Healthcare,1,0,0,1,0,0,0,0,1,1,0,0,1,0,0
+TCGA,TCGA-A7-A0DA,Christiana Healthcare,1,0,0,1,0,0,0,0,1,1,0,0,1,0,0
+TCGA,TCGA-A7-A13D,Christiana Healthcare,1,0,0,1,0,0,0,0,1,1,0,0,1,0,0
+TCGA,TCGA-A7-A13E,Christiana Healthcare,1,0,0,1,0,0,0,0,1,1,0,0,1,0,0
+TCGA,TCGA-A7-A13F,Christiana Healthcare,1,0,0,1,0,0,0,0,1,1,0,0,1,0,0
+TCGA,TCGA-A7-A26F,Christiana Healthcare,1,0,0,1,0,0,0,0,1,1,0,0,1,0,0
+TCGA,TCGA-A7-A26G,Christiana Healthcare,1,0,0,1,0,0,0,0,1,1,0,0,1,0,0
+TCGA,TCGA-A7-A26I,Christiana Healthcare,1,0,0,1,0,0,0,0,1,1,0,0,1,0,0
+TCGA,TCGA-A7-A26J,Christiana Healthcare,1,0,0,1,0,0,0,0,1,1,0,0,1,0,0
+TCGA,TCGA-A8-A06N,Indivumed,1,0,0,0,0,1,0,1,0,1,0,0,1,0,0
+TCGA,TCGA-A8-A06O,Indivumed,1,0,0,0,0,1,0,1,0,1,0,0,1,0,0
+TCGA,TCGA-A8-A06T,Indivumed,1,0,0,0,0,1,0,1,0,1,0,0,1,0,0
+TCGA,TCGA-A8-A06U,Indivumed,1,0,0,0,0,1,0,1,0,1,0,0,1,0,0
+TCGA,TCGA-A8-A06Y,Indivumed,1,0,0,0,0,1,0,1,0,1,0,0,1,0,0
+TCGA,TCGA-A8-A06Z,Indivumed,1,0,0,0,0,1,0,1,0,1,0,0,1,0,0
+TCGA,TCGA-A8-A075,Indivumed,1,0,0,0,0,1,0,1,0,1,0,0,1,0,0
+TCGA,TCGA-A8-A076,Indivumed,1,0,0,0,0,1,0,1,0,1,0,0,1,0,0
+TCGA,TCGA-A8-A07B,Indivumed,1,0,0,0,0,1,0,1,0,1,0,0,1,0,0
+TCGA,TCGA-A8-A07C,Indivumed,1,0,0,0,0,1,0,1,0,1,0,0,1,0,0
+TCGA,TCGA-A8-A07G,Indivumed,1,0,0,0,0,1,0,1,0,1,0,0,1,0,0
+TCGA,TCGA-A8-A07I,Indivumed,1,0,0,0,0,1,0,1,0,1,0,0,1,0,0
+TCGA,TCGA-A8-A07J,Indivumed,1,0,0,0,0,1,0,1,0,1,0,0,1,0,0
+TCGA,TCGA-A8-A07O,Indivumed,1,0,0,0,0,1,0,1,0,1,0,0,1,0,0
+TCGA,TCGA-A8-A07P,Indivumed,1,0,0,0,0,1,0,1,0,1,0,0,1,0,0
+TCGA,TCGA-A8-A07R,Indivumed,1,0,0,0,0,1,0,1,0,1,0,0,1,0,0
+TCGA,TCGA-A8-A07U,Indivumed,1,0,0,0,0,1,0,1,0,1,0,0,1,0,0
+TCGA,TCGA-A8-A07W,Indivumed,1,0,0,0,0,1,0,1,0,1,0,0,1,0,0
+TCGA,TCGA-A8-A081,Indivumed,1,0,0,0,0,1,0,1,0,1,0,0,1,0,0
+TCGA,TCGA-A8-A082,Indivumed,1,0,0,0,0,1,0,1,0,1,0,0,1,0,0
+TCGA,TCGA-A8-A085,Indivumed,1,0,0,0,0,1,0,1,0,1,0,0,1,0,0
+TCGA,TCGA-A8-A086,Indivumed,1,0,0,0,0,1,0,1,0,1,0,0,1,0,0
+TCGA,TCGA-A8-A08B,Indivumed,1,0,0,0,0,1,0,1,0,1,0,0,1,0,0
+TCGA,TCGA-A8-A08G,Indivumed,1,0,0,0,0,1,0,1,0,1,0,0,1,0,0
+TCGA,TCGA-A8-A08H,Indivumed,1,0,0,0,0,1,0,1,0,1,0,0,1,0,0
+TCGA,TCGA-A8-A08J,Indivumed,1,0,0,0,0,1,0,1,0,1,0,0,1,0,0
+TCGA,TCGA-A8-A08L,Indivumed,1,0,0,0,0,1,0,1,0,1,0,0,1,0,0
+TCGA,TCGA-A8-A08O,Indivumed,1,0,0,0,0,1,0,1,0,1,0,0,1,0,0
+TCGA,TCGA-A8-A08P,Indivumed,1,0,0,0,0,1,0,1,0,1,0,0,1,0,0
+TCGA,TCGA-A8-A08R,Indivumed,1,0,0,0,0,1,0,1,0,1,0,0,1,0,0
+TCGA,TCGA-A8-A08X,Indivumed,1,0,0,0,0,1,0,1,0,1,0,0,1,0,0
+TCGA,TCGA-A8-A090,Indivumed,1,0,0,0,0,1,0,1,0,1,0,0,1,0,0
+TCGA,TCGA-A8-A092,Indivumed,1,0,0,0,0,1,0,1,0,1,0,0,1,0,0
+TCGA,TCGA-A8-A093,Indivumed,1,0,0,0,0,1,0,1,0,1,0,0,1,0,0
+TCGA,TCGA-A8-A095,Indivumed,1,0,0,0,0,1,0,1,0,1,0,0,1,0,0
+TCGA,TCGA-A8-A097,Indivumed,1,0,0,0,0,1,0,1,0,1,0,0,1,0,0
+TCGA,TCGA-A8-A099,Indivumed,1,0,0,0,0,1,0,1,0,1,0,0,1,0,0
+TCGA,TCGA-A8-A09A,Indivumed,1,0,0,0,0,1,0,1,0,1,0,0,1,0,0
+TCGA,TCGA-A8-A09B,Indivumed,1,0,0,0,0,1,0,1,0,1,0,0,1,0,0
+TCGA,TCGA-A8-A09D,Indivumed,1,0,0,0,0,1,0,1,0,1,0,0,1,0,0
+TCGA,TCGA-A8-A09G,Indivumed,1,0,0,0,0,1,0,1,0,1,0,0,1,0,0
+TCGA,TCGA-A8-A09I,Indivumed,1,0,0,0,0,1,0,1,0,1,0,0,1,0,0
+TCGA,TCGA-A8-A09M,Indivumed,1,0,0,0,0,1,0,1,0,1,0,0,1,0,0
+TCGA,TCGA-A8-A09R,Indivumed,1,0,0,0,0,1,0,1,0,1,0,0,1,0,0
+TCGA,TCGA-A8-A09T,Indivumed,1,0,0,0,0,1,0,1,0,1,0,0,1,0,0
+TCGA,TCGA-A8-A09W,Indivumed,1,0,0,0,0,1,0,1,0,1,0,0,1,0,0
+TCGA,TCGA-A8-A0A7,Indivumed,1,0,0,0,0,1,0,1,0,1,0,0,1,0,0
+TCGA,TCGA-A8-A0AB,Indivumed,1,0,0,0,0,1,0,1,0,1,0,0,1,0,0
+TCGA,TCGA-A8-A0AD,Indivumed,1,0,0,0,0,1,0,1,0,1,0,0,1,0,0
+TCGA,TCGA-AC-A2QH,International Genomics Consortium,0,1,0,1,0,0,1,0,0,1,0,0,0,0,1
+TCGA,TCGA-AN-A0AL,Cureline,1,0,0,1,0,0,0,0,1,1,0,0,1,0,0
+TCGA,TCGA-AN-A0AR,Cureline,1,0,0,1,0,0,0,0,1,1,0,0,1,0,0
+TCGA,TCGA-AN-A0AT,Cureline,1,0,0,1,0,0,0,0,1,1,0,0,1,0,0
+TCGA,TCGA-AN-A0FF,Cureline,1,0,0,1,0,0,0,0,1,1,0,0,1,0,0
+TCGA,TCGA-AN-A0FJ,Cureline,1,0,0,1,0,0,0,0,1,1,0,0,1,0,0
+TCGA,TCGA-AN-A0FL,Cureline,1,0,0,1,0,0,0,0,1,1,0,0,1,0,0
+TCGA,TCGA-AN-A0FT,Cureline,1,0,0,1,0,0,0,0,1,1,0,0,1,0,0
+TCGA,TCGA-AN-A0FV,Cureline,1,0,0,1,0,0,0,0,1,1,0,0,1,0,0
+TCGA,TCGA-AN-A0FX,Cureline,1,0,0,1,0,0,0,0,1,1,0,0,1,0,0
+TCGA,TCGA-AN-A0FZ,Cureline,1,0,0,1,0,0,0,0,1,1,0,0,1,0,0
+TCGA,TCGA-AN-A0G0,Cureline,1,0,0,1,0,0,0,0,1,1,0,0,1,0,0
+TCGA,TCGA-AN-A0XL,Cureline,1,0,0,1,0,0,0,0,1,1,0,0,1,0,0
+TCGA,TCGA-AO-A03L,MSKCC,0,1,0,0,1,0,1,0,0,1,0,0,0,0,1
+TCGA,TCGA-AO-A03M,MSKCC,0,1,0,0,1,0,1,0,0,1,0,0,0,0,1
+TCGA,TCGA-AO-A03T,MSKCC,0,1,0,0,1,0,1,0,0,1,0,0,0,0,1
+TCGA,TCGA-AO-A03V,MSKCC,0,1,0,0,1,0,1,0,0,1,0,0,0,0,1
+TCGA,TCGA-AO-A0J4,MSKCC,0,1,0,0,1,0,1,0,0,1,0,0,0,0,1
+TCGA,TCGA-AO-A0J5,MSKCC,0,1,0,0,1,0,1,0,0,1,0,0,0,0,1
+TCGA,TCGA-AO-A0J6,MSKCC,0,1,0,0,1,0,1,0,0,1,0,0,0,0,1
+TCGA,TCGA-AO-A0J7,MSKCC,0,1,0,0,1,0,1,0,0,1,0,0,0,0,1
+TCGA,TCGA-AO-A0JA,MSKCC,0,1,0,0,1,0,1,0,0,1,0,0,0,0,1
+TCGA,TCGA-AO-A0JE,MSKCC,0,1,0,0,1,0,1,0,0,1,0,0,0,0,1
+TCGA,TCGA-AO-A0JG,MSKCC,0,1,0,0,1,0,1,0,0,1,0,0,0,0,1
+TCGA,TCGA-AO-A0JL,MSKCC,0,1,0,0,1,0,1,0,0,1,0,0,0,0,1
+TCGA,TCGA-AO-A0JM,MSKCC,0,1,0,0,1,0,1,0,0,1,0,0,0,0,1
+TCGA,TCGA-AO-A124,MSKCC,0,1,0,0,1,0,1,0,0,1,0,0,0,0,1
+TCGA,TCGA-AO-A126,MSKCC,0,1,0,0,1,0,1,0,0,1,0,0,0,0,1
+TCGA,TCGA-AO-A128,MSKCC,0,1,0,0,1,0,1,0,0,1,0,0,0,0,1
+TCGA,TCGA-AO-A12A,MSKCC,0,1,0,0,1,0,1,0,0,1,0,0,0,0,1
+TCGA,TCGA-AO-A12B,MSKCC,0,1,0,0,1,0,1,0,0,1,0,0,0,0,1
+TCGA,TCGA-AO-A1KO,MSKCC,0,1,0,0,1,0,1,0,0,1,0,0,0,0,1
+TCGA,TCGA-AO-A1KR,MSKCC,0,1,0,0,1,0,1,0,0,1,0,0,0,0,1
+TCGA,TCGA-AQ-A04H,UNC,1,0,0,1,0,0,0,1,0,0,0,1,1,0,0
+TCGA,TCGA-AQ-A04J,UNC,1,0,0,1,0,0,0,1,0,0,0,1,1,0,0
+TCGA,TCGA-AR-A0TP,Mayo,1,0,0,1,0,0,1,0,0,0,0,1,1,0,0
+TCGA,TCGA-AR-A0TQ,Mayo,1,0,0,1,0,0,1,0,0,0,0,1,1,0,0
+TCGA,TCGA-AR-A0TS,Mayo,1,0,0,1,0,0,1,0,0,0,0,1,1,0,0
+TCGA,TCGA-AR-A0TU,Mayo,1,0,0,1,0,0,1,0,0,0,0,1,1,0,0
+TCGA,TCGA-AR-A0TV,Mayo,1,0,0,1,0,0,1,0,0,0,0,1,1,0,0
+TCGA,TCGA-AR-A0TZ,Mayo,1,0,0,1,0,0,1,0,0,0,0,1,1,0,0
+TCGA,TCGA-AR-A0U0,Mayo,1,0,0,1,0,0,1,0,0,0,0,1,1,0,0
+TCGA,TCGA-AR-A0U1,Mayo,1,0,0,1,0,0,1,0,0,0,0,1,1,0,0
+TCGA,TCGA-AR-A0U2,Mayo,1,0,0,1,0,0,1,0,0,0,0,1,1,0,0
+TCGA,TCGA-AR-A0U4,Mayo,1,0,0,1,0,0,1,0,0,0,0,1,1,0,0
+TCGA,TCGA-AR-A1AH,Mayo,1,0,0,1,0,0,1,0,0,0,0,1,1,0,0
+TCGA,TCGA-AR-A1AI,Mayo,1,0,0,1,0,0,1,0,0,0,0,1,1,0,0
+TCGA,TCGA-AR-A1AJ,Mayo,1,0,0,1,0,0,1,0,0,0,0,1,1,0,0
+TCGA,TCGA-AR-A1AK,Mayo,1,0,0,1,0,0,1,0,0,0,0,1,1,0,0
+TCGA,TCGA-AR-A1AN,Mayo,1,0,0,1,0,0,1,0,0,0,0,1,1,0,0
+TCGA,TCGA-AR-A1AQ,Mayo,1,0,0,1,0,0,1,0,0,0,0,1,1,0,0
+TCGA,TCGA-AR-A1AR,Mayo,1,0,0,1,0,0,1,0,0,0,0,1,1,0,0
+TCGA,TCGA-AR-A1AU,Mayo,1,0,0,1,0,0,1,0,0,0,0,1,1,0,0
+TCGA,TCGA-AR-A1AW,Mayo,1,0,0,1,0,0,1,0,0,0,0,1,1,0,0
+TCGA,TCGA-AR-A1AX,Mayo,1,0,0,1,0,0,1,0,0,0,0,1,1,0,0
+TCGA,TCGA-AR-A1AY,Mayo,1,0,0,1,0,0,1,0,0,0,0,1,1,0,0
+TCGA,TCGA-AR-A24K,Mayo,1,0,0,1,0,0,1,0,0,0,0,1,1,0,0
+TCGA,TCGA-AR-A24L,Mayo,1,0,0,1,0,0,1,0,0,0,0,1,1,0,0
+TCGA,TCGA-AR-A24M,Mayo,1,0,0,1,0,0,1,0,0,0,0,1,1,0,0
+TCGA,TCGA-AR-A24O,Mayo,1,0,0,1,0,0,1,0,0,0,0,1,1,0,0
+TCGA,TCGA-AR-A24P,Mayo,1,0,0,1,0,0,1,0,0,0,0,1,1,0,0
+TCGA,TCGA-AR-A24Q,Mayo,1,0,0,1,0,0,1,0,0,0,0,1,1,0,0
+TCGA,TCGA-AR-A24R,Mayo,1,0,0,1,0,0,1,0,0,0,0,1,1,0,0
+TCGA,TCGA-AR-A24T,Mayo,1,0,0,1,0,0,1,0,0,0,0,1,1,0,0
+TCGA,TCGA-AR-A251,Mayo,1,0,0,1,0,0,1,0,0,0,0,1,1,0,0
+TCGA,TCGA-AR-A256,Mayo,1,0,0,1,0,0,1,0,0,0,0,1,1,0,0
+TCGA,TCGA-AR-A2LH,Mayo,1,0,0,1,0,0,1,0,0,0,0,1,1,0,0
+TCGA,TCGA-B6-A0I2,Duke,1,0,0,1,0,0,1,0,0,0,1,0,0,0,1
+TCGA,TCGA-B6-A0I5,Duke,1,0,0,1,0,0,1,0,0,0,1,0,0,0,1
+TCGA,TCGA-B6-A0I6,Duke,1,0,0,1,0,0,1,0,0,0,1,0,0,0,1
+TCGA,TCGA-B6-A0I8,Duke,1,0,0,1,0,0,1,0,0,0,1,0,0,0,1
+TCGA,TCGA-B6-A0I9,Duke,1,0,0,1,0,0,1,0,0,0,1,0,0,0,1
+TCGA,TCGA-B6-A0IE,Duke,1,0,0,1,0,0,1,0,0,0,1,0,0,0,1
+TCGA,TCGA-B6-A0IJ,Duke,1,0,0,1,0,0,1,0,0,0,1,0,0,0,1
+TCGA,TCGA-B6-A0IN,Duke,1,0,0,1,0,0,1,0,0,0,1,0,0,0,1
+TCGA,TCGA-B6-A0IQ,Duke,1,0,0,1,0,0,1,0,0,0,1,0,0,0,1
+TCGA,TCGA-B6-A0RE,Duke,1,0,0,1,0,0,1,0,0,0,1,0,0,0,1
+TCGA,TCGA-B6-A0RG,Duke,1,0,0,1,0,0,1,0,0,0,1,0,0,0,1
+TCGA,TCGA-B6-A0RH,Duke,1,0,0,1,0,0,1,0,0,0,1,0,0,0,1
+TCGA,TCGA-B6-A0RI,Duke,1,0,0,1,0,0,1,0,0,0,1,0,0,0,1
+TCGA,TCGA-B6-A0RL,Duke,1,0,0,1,0,0,1,0,0,0,1,0,0,0,1
+TCGA,TCGA-B6-A0RS,Duke,1,0,0,1,0,0,1,0,0,0,1,0,0,0,1
+TCGA,TCGA-B6-A0RT,Duke,1,0,0,1,0,0,1,0,0,0,1,0,0,0,1
+TCGA,TCGA-B6-A0RU,Duke,1,0,0,1,0,0,1,0,0,0,1,0,0,0,1
+TCGA,TCGA-B6-A0RV,Duke,1,0,0,1,0,0,1,0,0,0,1,0,0,0,1
+TCGA,TCGA-B6-A0WW,Duke,1,0,0,1,0,0,1,0,0,0,1,0,0,0,1
+TCGA,TCGA-B6-A0WX,Duke,1,0,0,1,0,0,1,0,0,0,1,0,0,0,1
+TCGA,TCGA-B6-A0WY,Duke,1,0,0,1,0,0,1,0,0,0,1,0,0,0,1
+TCGA,TCGA-B6-A0X1,Duke,1,0,0,1,0,0,1,0,0,0,1,0,0,0,1
+TCGA,TCGA-B6-A1KF,Duke,1,0,0,1,0,0,1,0,0,0,1,0,0,0,1
+TCGA,TCGA-BH-A0AU,University of Pittsburgh,0,0,1,1,0,0,1,0,0,1,0,0,1,0,0
+TCGA,TCGA-BH-A0AV,University of Pittsburgh,0,0,1,1,0,0,1,0,0,1,0,0,1,0,0
+TCGA,TCGA-BH-A0AW,University of Pittsburgh,0,0,1,1,0,0,1,0,0,1,0,0,1,0,0
+TCGA,TCGA-BH-A0AZ,University of Pittsburgh,0,0,1,1,0,0,1,0,0,1,0,0,1,0,0
+TCGA,TCGA-BH-A0B3,University of Pittsburgh,0,0,1,1,0,0,1,0,0,1,0,0,1,0,0
+TCGA,TCGA-BH-A0B4,University of Pittsburgh,0,0,1,1,0,0,1,0,0,1,0,0,1,0,0
+TCGA,TCGA-BH-A0B5,University of Pittsburgh,0,0,1,1,0,0,1,0,0,1,0,0,1,0,0
+TCGA,TCGA-BH-A0B7,University of Pittsburgh,0,0,1,1,0,0,1,0,0,1,0,0,1,0,0
+TCGA,TCGA-BH-A0B9,University of Pittsburgh,0,0,1,1,0,0,1,0,0,1,0,0,1,0,0
+TCGA,TCGA-BH-A0BD,University of Pittsburgh,0,0,1,1,0,0,1,0,0,1,0,0,1,0,0
+TCGA,TCGA-BH-A0BG,University of Pittsburgh,0,0,1,1,0,0,1,0,0,1,0,0,1,0,0
+TCGA,TCGA-BH-A0BJ,University of Pittsburgh,0,0,1,1,0,0,1,0,0,1,0,0,1,0,0
+TCGA,TCGA-BH-A0BL,University of Pittsburgh,0,0,1,1,0,0,1,0,0,1,0,0,1,0,0
+TCGA,TCGA-BH-A0BQ,University of Pittsburgh,0,0,1,1,0,0,1,0,0,1,0,0,1,0,0
+TCGA,TCGA-BH-A0BV,University of Pittsburgh,0,0,1,1,0,0,1,0,0,1,0,0,1,0,0
+TCGA,TCGA-BH-A0BW,University of Pittsburgh,0,0,1,1,0,0,1,0,0,1,0,0,1,0,0
+TCGA,TCGA-BH-A0BZ,University of Pittsburgh,0,0,1,1,0,0,1,0,0,1,0,0,1,0,0
+TCGA,TCGA-BH-A0C0,University of Pittsburgh,0,0,1,1,0,0,1,0,0,1,0,0,1,0,0
+TCGA,TCGA-BH-A0C3,University of Pittsburgh,0,0,1,1,0,0,1,0,0,1,0,0,1,0,0
+TCGA,TCGA-BH-A0C7,University of Pittsburgh,0,0,1,1,0,0,1,0,0,1,0,0,1,0,0
+TCGA,TCGA-BH-A0DD,University of Pittsburgh,0,0,1,1,0,0,1,0,0,1,0,0,1,0,0
+TCGA,TCGA-BH-A0DE,University of Pittsburgh,0,0,1,1,0,0,1,0,0,1,0,0,1,0,0
+TCGA,TCGA-BH-A0DG,University of Pittsburgh,0,0,1,1,0,0,1,0,0,1,0,0,1,0,0
+TCGA,TCGA-BH-A0DK,University of Pittsburgh,0,0,1,1,0,0,1,0,0,1,0,0,1,0,0
+TCGA,TCGA-BH-A0DL,University of Pittsburgh,0,0,1,1,0,0,1,0,0,1,0,0,1,0,0
+TCGA,TCGA-BH-A0DQ,University of Pittsburgh,0,0,1,1,0,0,1,0,0,1,0,0,1,0,0
+TCGA,TCGA-BH-A0DT,University of Pittsburgh,0,0,1,1,0,0,1,0,0,1,0,0,1,0,0
+TCGA,TCGA-BH-A0DZ,University of Pittsburgh,0,0,1,1,0,0,1,0,0,1,0,0,1,0,0
+TCGA,TCGA-BH-A0E0,University of Pittsburgh,0,0,1,1,0,0,1,0,0,1,0,0,1,0,0
+TCGA,TCGA-BH-A0E2,University of Pittsburgh,0,0,1,1,0,0,1,0,0,1,0,0,1,0,0
+TCGA,TCGA-BH-A0E6,University of Pittsburgh,0,0,1,1,0,0,1,0,0,1,0,0,1,0,0
+TCGA,TCGA-BH-A0EE,University of Pittsburgh,0,0,1,1,0,0,1,0,0,1,0,0,1,0,0
+TCGA,TCGA-BH-A0GY,University of Pittsburgh,0,0,1,1,0,0,1,0,0,1,0,0,1,0,0
+TCGA,TCGA-BH-A0H3,University of Pittsburgh,0,0,1,1,0,0,1,0,0,1,0,0,1,0,0
+TCGA,TCGA-BH-A0H5,University of Pittsburgh,0,0,1,1,0,0,1,0,0,1,0,0,1,0,0
+TCGA,TCGA-BH-A0HA,University of Pittsburgh,0,0,1,1,0,0,1,0,0,1,0,0,1,0,0
+TCGA,TCGA-BH-A0HO,University of Pittsburgh,0,0,1,1,0,0,1,0,0,1,0,0,1,0,0
+TCGA,TCGA-BH-A0RX,University of Pittsburgh,0,0,1,1,0,0,1,0,0,1,0,0,1,0,0
+TCGA,TCGA-BH-A0W4,University of Pittsburgh,0,0,1,1,0,0,1,0,0,1,0,0,1,0,0
+TCGA,TCGA-BH-A0W7,University of Pittsburgh,0,0,1,1,0,0,1,0,0,1,0,0,1,0,0
+TCGA,TCGA-BH-A0WA,University of Pittsburgh,0,0,1,1,0,0,1,0,0,1,0,0,1,0,0
+TCGA,TCGA-BH-A18G,University of Pittsburgh,0,0,1,1,0,0,1,0,0,1,0,0,1,0,0
+TCGA,TCGA-BH-A18Q,University of Pittsburgh,0,0,1,1,0,0,1,0,0,1,0,0,1,0,0
+TCGA,TCGA-BH-A18T,University of Pittsburgh,0,0,1,1,0,0,1,0,0,1,0,0,1,0,0
+TCGA,TCGA-BH-A18V,University of Pittsburgh,0,0,1,1,0,0,1,0,0,1,0,0,1,0,0
+TCGA,TCGA-BH-A1ES,University of Pittsburgh,0,0,1,1,0,0,1,0,0,1,0,0,1,0,0
+TCGA,TCGA-BH-A1F0,University of Pittsburgh,0,0,1,1,0,0,1,0,0,1,0,0,1,0,0
+TCGA,TCGA-BH-A1F6,University of Pittsburgh,0,0,1,1,0,0,1,0,0,1,0,0,1,0,0
+TCGA,TCGA-BH-A1FC,University of Pittsburgh,0,0,1,1,0,0,1,0,0,1,0,0,1,0,0
+TCGA,TCGA-BH-A1FE,University of Pittsburgh,0,0,1,1,0,0,1,0,0,1,0,0,1,0,0
+TCGA,TCGA-BH-A1FH,University of Pittsburgh,0,0,1,1,0,0,1,0,0,1,0,0,1,0,0
+TCGA,TCGA-BH-A1FM,University of Pittsburgh,0,0,1,1,0,0,1,0,0,1,0,0,1,0,0
+TCGA,TCGA-BH-A1FN,University of Pittsburgh,0,0,1,1,0,0,1,0,0,1,0,0,1,0,0
+TCGA,TCGA-BH-A208,University of Pittsburgh,0,0,1,1,0,0,1,0,0,1,0,0,1,0,0
+TCGA,TCGA-C8-A12K,ILSBio,1,0,0,0,0,1,1,0,0,0,1,0,1,0,0
+TCGA,TCGA-C8-A12U,ILSBio,1,0,0,0,0,1,1,0,0,0,1,0,1,0,0
+TCGA,TCGA-C8-A12V,ILSBio,1,0,0,0,0,1,1,0,0,0,1,0,1,0,0
+TCGA,TCGA-C8-A12W,ILSBio,1,0,0,0,0,1,1,0,0,0,1,0,1,0,0
+TCGA,TCGA-C8-A131,ILSBio,1,0,0,0,0,1,1,0,0,0,1,0,1,0,0
+TCGA,TCGA-C8-A134,ILSBio,1,0,0,0,0,1,1,0,0,0,1,0,1,0,0
+TCGA,TCGA-C8-A1HI,ILSBio,1,0,0,0,0,1,1,0,0,0,1,0,1,0,0
+TCGA,TCGA-C8-A1HJ,ILSBio,1,0,0,0,0,1,1,0,0,0,1,0,1,0,0
+TCGA,TCGA-C8-A1HO,ILSBio,1,0,0,0,0,1,1,0,0,0,1,0,1,0,0
+TCGA,TCGA-C8-A26V,ILSBio,1,0,0,0,0,1,1,0,0,0,1,0,1,0,0
+TCGA,TCGA-C8-A273,ILSBio,1,0,0,0,0,1,1,0,0,0,1,0,1,0,0
+TCGA,TCGA-C8-A27A,ILSBio,1,0,0,0,0,1,1,0,0,0,1,0,1,0,0
+TCGA,TCGA-C8-A27B,ILSBio,1,0,0,0,0,1,1,0,0,0,1,0,1,0,0
+TCGA,TCGA-D8-A13Z,Greater Poland Cancer Center,1,0,0,1,0,0,0,1,0,0,0,1,1,0,0
+TCGA,TCGA-D8-A141,Greater Poland Cancer Center,1,0,0,1,0,0,0,1,0,0,0,1,1,0,0
+TCGA,TCGA-D8-A142,Greater Poland Cancer Center,1,0,0,1,0,0,0,1,0,0,0,1,1,0,0
+TCGA,TCGA-D8-A143,Greater Poland Cancer Center,1,0,0,1,0,0,0,1,0,0,0,1,1,0,0
+TCGA,TCGA-D8-A147,Greater Poland Cancer Center,1,0,0,1,0,0,0,1,0,0,0,1,1,0,0
+TCGA,TCGA-D8-A1JD,Greater Poland Cancer Center,1,0,0,1,0,0,0,1,0,0,0,1,1,0,0
+TCGA,TCGA-D8-A1JK,Greater Poland Cancer Center,1,0,0,1,0,0,0,1,0,0,0,1,1,0,0
+TCGA,TCGA-D8-A1JL,Greater Poland Cancer Center,1,0,0,1,0,0,0,1,0,0,0,1,1,0,0
+TCGA,TCGA-D8-A1JM,Greater Poland Cancer Center,1,0,0,1,0,0,0,1,0,0,0,1,1,0,0
+TCGA,TCGA-D8-A1X7,Greater Poland Cancer Center,1,0,0,1,0,0,0,1,0,0,0,1,1,0,0
+TCGA,TCGA-D8-A1XD,Greater Poland Cancer Center,1,0,0,1,0,0,0,1,0,0,0,1,1,0,0
+TCGA,TCGA-D8-A1XF,Greater Poland Cancer Center,1,0,0,1,0,0,0,1,0,0,0,1,1,0,0
+TCGA,TCGA-D8-A1XK,Greater Poland Cancer Center,1,0,0,1,0,0,0,1,0,0,0,1,1,0,0
+TCGA,TCGA-D8-A1XL,Greater Poland Cancer Center,1,0,0,1,0,0,0,1,0,0,0,1,1,0,0
+TCGA,TCGA-D8-A1XQ,Greater Poland Cancer Center,1,0,0,1,0,0,0,1,0,0,0,1,1,0,0
+TCGA,TCGA-D8-A1XW,Greater Poland Cancer Center,1,0,0,1,0,0,0,1,0,0,0,1,1,0,0
+TCGA,TCGA-D8-A27F,Greater Poland Cancer Center,1,0,0,1,0,0,0,1,0,0,0,1,1,0,0
+TCGA,TCGA-D8-A27H,Greater Poland Cancer Center,1,0,0,1,0,0,0,1,0,0,0,1,1,0,0
+TCGA,TCGA-D8-A27K,Greater Poland Cancer Center,1,0,0,1,0,0,0,1,0,0,0,1,1,0,0
+TCGA,TCGA-D8-A27L,Greater Poland Cancer Center,1,0,0,1,0,0,0,1,0,0,0,1,1,0,0
+TCGA,TCGA-D8-A27M,Greater Poland Cancer Center,1,0,0,1,0,0,0,1,0,0,0,1,1,0,0
+TCGA,TCGA-D8-A27R,Greater Poland Cancer Center,1,0,0,1,0,0,0,1,0,0,0,1,1,0,0
+TCGA,TCGA-E2-A108,Roswell Park,0,1,0,0,1,0,1,0,0,1,0,0,0,0,1
+TCGA,TCGA-E2-A10A,Roswell Park,0,1,0,0,1,0,1,0,0,1,0,0,0,0,1
+TCGA,TCGA-E2-A10F,Roswell Park,0,1,0,0,1,0,1,0,0,1,0,0,0,0,1
+TCGA,TCGA-E2-A14N,Roswell Park,0,1,0,0,1,0,1,0,0,1,0,0,0,0,1
+TCGA,TCGA-E2-A14R,Roswell Park,0,1,0,0,1,0,1,0,0,1,0,0,0,0,1
+TCGA,TCGA-E2-A14X,Roswell Park,0,1,0,0,1,0,1,0,0,1,0,0,0,0,1
+TCGA,TCGA-E2-A14Y,Roswell Park,0,1,0,0,1,0,1,0,0,1,0,0,0,0,1
+TCGA,TCGA-E2-A150,Roswell Park,0,1,0,0,1,0,1,0,0,1,0,0,0,0,1
+TCGA,TCGA-E2-A158,Roswell Park,0,1,0,0,1,0,1,0,0,1,0,0,0,0,1
+TCGA,TCGA-E2-A159,Roswell Park,0,1,0,0,1,0,1,0,0,1,0,0,0,0,1
+TCGA,TCGA-E2-A15D,Roswell Park,0,1,0,0,1,0,1,0,0,1,0,0,0,0,1
+TCGA,TCGA-E2-A1AZ,Roswell Park,0,1,0,0,1,0,1,0,0,1,0,0,0,0,1
+TCGA,TCGA-E2-A1B5,Roswell Park,0,1,0,0,1,0,1,0,0,1,0,0,0,0,1
+TCGA,TCGA-E2-A1II,Roswell Park,0,1,0,0,1,0,1,0,0,1,0,0,0,0,1
+TCGA,TCGA-E2-A1IO,Roswell Park,0,1,0,0,1,0,1,0,0,1,0,0,0,0,1
+TCGA,TCGA-E2-A1L6,Roswell Park,0,1,0,0,1,0,1,0,0,1,0,0,0,0,1
+TCGA,TCGA-E2-A1L9,Roswell Park,0,1,0,0,1,0,1,0,0,1,0,0,0,0,1
+TCGA,TCGA-E2-A1LG,Roswell Park,0,1,0,0,1,0,1,0,0,1,0,0,0,0,1
+TCGA,TCGA-E2-A1LH,Roswell Park,0,1,0,0,1,0,1,0,0,1,0,0,0,0,1
+TCGA,TCGA-E2-A1LI,Roswell Park,0,1,0,0,1,0,1,0,0,1,0,0,0,0,1
+TCGA,TCGA-E2-A1LK,Roswell Park,0,1,0,0,1,0,1,0,0,1,0,0,0,0,1
+TCGA,TCGA-E2-A1LL,Roswell Park,0,1,0,0,1,0,1,0,0,1,0,0,0,0,1
+TCGA,TCGA-E2-A1LS,Roswell Park,0,1,0,0,1,0,1,0,0,1,0,0,0,0,1
+TCGA,TCGA-E9-A1N4,Asterand,0,0,1,0,1,0,1,0,0,0,1,0,1,0,0
+TCGA,TCGA-E9-A1N5,Asterand,0,0,1,0,1,0,1,0,0,0,1,0,1,0,0
+TCGA,TCGA-E9-A1N8,Asterand,0,0,1,0,1,0,1,0,0,0,1,0,1,0,0
+TCGA,TCGA-E9-A1N9,Asterand,0,0,1,0,1,0,1,0,0,0,1,0,1,0,0
+TCGA,TCGA-E9-A1ND,Asterand,0,0,1,0,1,0,1,0,0,0,1,0,1,0,0
+TCGA,TCGA-E9-A1NE,Asterand,0,0,1,0,1,0,1,0,0,0,1,0,1,0,0
+TCGA,TCGA-E9-A227,Asterand,0,0,1,0,1,0,1,0,0,0,1,0,1,0,0
+TCGA,TCGA-E9-A22G,Asterand,0,0,1,0,1,0,1,0,0,0,1,0,1,0,0
+TCGA,TCGA-E9-A22H,Asterand,0,0,1,0,1,0,1,0,0,0,1,0,1,0,0
+TCGA,TCGA-E9-A243,Asterand,0,0,1,0,1,0,1,0,0,0,1,0,1,0,0
+TCGA,TCGA-E9-A244,Asterand,0,0,1,0,1,0,1,0,0,0,1,0,1,0,0
+TCGA,TCGA-E9-A248,Asterand,0,0,1,0,1,0,1,0,0,0,1,0,1,0,0
+TCGA,TCGA-E9-A2JT,Asterand,0,0,1,0,1,0,1,0,0,0,1,0,1,0,0
+TCGA,TCGA-EW-A1IX,University of Miami,1,0,0,1,0,0,1,0,0,0,0,1,0,1,0
+TCGA,TCGA-EW-A1IY,University of Miami,1,0,0,1,0,0,1,0,0,0,0,1,0,1,0
+TCGA,TCGA-EW-A1J1,University of Miami,1,0,0,1,0,0,1,0,0,0,0,1,0,1,0
+TCGA,TCGA-EW-A1OW,University of Miami,1,0,0,1,0,0,1,0,0,0,0,1,0,1,0
+TCGA,TCGA-EW-A1OX,University of Miami,1,0,0,1,0,0,1,0,0,0,0,1,0,1,0
+TCGA,TCGA-EW-A1P3,University of Miami,1,0,0,1,0,0,1,0,0,0,0,1,0,1,0
+TCGA,TCGA-EW-A1P4,University of Miami,1,0,0,1,0,0,1,0,0,0,0,1,0,1,0
+TCGA,TCGA-EW-A1P7,University of Miami,1,0,0,1,0,0,1,0,0,0,0,1,0,1,0
+TCGA,TCGA-EW-A1P8,University of Miami,1,0,0,1,0,0,1,0,0,0,0,1,0,1,0
+TCGA,TCGA-EW-A1PB,University of Miami,1,0,0,1,0,0,1,0,0,0,0,1,0,1,0
+TCGA,TCGA-EW-A1PH,University of Miami,1,0,0,1,0,0,1,0,0,0,0,1,0,1,0
+TCGA,TCGA-GM-A2DF,MD Anderson,0,0,1,1,0,0,1,0,0,1,0,0,0,1,0

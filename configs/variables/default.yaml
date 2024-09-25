@@ -1,0 +1,7 @@
+mil_in_features: 2048
+mil_hidden_features: 512
+attention_hidden_features: 128
+fold: 0 # Used in `paths/default.yaml` to set the path to a .txt with paths for train/val/test
+
+
+

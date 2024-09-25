@@ -1,0 +1,11 @@
+_target_: ectil.datamodules.h5_datamodule.EctilH5DataModule
+root_dir: ???
+train_paths: ???
+val_paths: ???
+test_paths: ???
+clini_file: ???
+patient_column: ???
+label_column: ???
+batch_size: 1
+num_workers: 0
+pin_memory: False

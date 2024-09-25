@@ -1,0 +1,35 @@
+# @package _global_
+
+
+
+defaults:
+  - _self_
+  - datamodule: h5.yaml
+  - model: h5_regression.yaml
+  - callbacks: default_regression.yaml
+  - logger: null
+  - trainer: default.yaml
+  - paths: default.yaml
+  - extras: default.yaml
+  - hydra: default.yaml
+  - variables: default.yaml
+  - experiment: null
+
+train: False
+test: True
+
+datamodule:
+  train_paths: ""
+  val_paths: ""
+  test_paths: ??? # Must be specified 
+  clini_file: null
+  label_column: null
+  patient_column: null # 
+  collate_fn:
+    _target_: ectil.datamodules.components.variable_size_collate.VariableSizeCollator
+  h5_type: ectil_eval
+  root_dir: ${paths.h5_root_dir}
+    
+task_name: "eval"
+tags: ["eval"]
+ckpt_path: ???

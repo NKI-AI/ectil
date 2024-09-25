@@ -1,0 +1,11 @@
+# train with many loggers at once
+
+defaults:
+  # - comet.yaml
+  - csv.yaml
+  - mlflow.yaml
+#  - neptune.yaml
+  - tensorboard.yaml
+#  - wandb.yaml
+
+set_timestamp_versioning: True

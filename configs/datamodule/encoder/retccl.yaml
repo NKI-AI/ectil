@@ -1,0 +1,3 @@
+mpp: 0.5
+tile_size: 512
+transform_set: "imagenet_normalization"

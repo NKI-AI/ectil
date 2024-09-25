@@ -1,0 +1,10 @@
+# This is currently missing a directory to save the h5s into.
+# Please specify this in the experiment.yaml you use, sincei t's very specific to the experiment
+defaults:
+  - h5_writer: tcga_dlup_h5_writer
+
+_target_: ectil.models.extraction_module.ExtractionModule
+encoder:
+  _target_: ectil.models.components.encoders.RetCCL
+  project_root_dir: ${paths.root_dir}
+

@@ -1,0 +1,25 @@
+defaults:
+  - model_checkpoint.yaml
+  - early_stopping.yaml
+  - model_summary.yaml
+  - rich_progress_bar.yaml
+  - log_scatter_plot.yaml
+  - log_slide_level_output.yaml
+  - log_tile_level_output.yaml
+  - _self_
+
+model_checkpoint:
+  dirpath: ${paths.output_dir}/checkpoints
+  filename: "epoch_{epoch:03d}_step_{step}"
+  monitor: "val/explained_variance"
+  mode: "max"
+  save_last: True
+  auto_insert_metric_name: False
+
+early_stopping:
+  monitor: "val/explained_variance"
+  patience: 15
+  mode: "max"
+
+model_summary:
+  max_depth: -1

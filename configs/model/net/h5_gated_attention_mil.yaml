@@ -1,0 +1,3 @@
+defaults:
+  - h5_mean_mil
+  - attention/gated_attention

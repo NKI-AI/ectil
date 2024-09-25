@@ -1,0 +1,1 @@
+Populated when extracting features with `tools/extract/retccl/extract_retccl_tcga_bc.sh`. Will contains a `masks` directory containing all the saved masks.

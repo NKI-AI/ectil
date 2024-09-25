@@ -1,0 +1,16 @@
+defaults:
+  - net/h5_gated_attention_mil
+  - criterion/mse
+  - override net/classifier: simple_regressor
+
+_target_: ectil.models.h5_module.H5LitRegressionModule
+
+net:
+  attention:
+    in_features: ${variables.mil_hidden_features}
+
+optimizer:
+  _target_: torch.optim.Adam
+  _partial_: true
+  lr: 0.001
+  weight_decay: 0.01

@@ -1,0 +1,2 @@
+log_slide_level_output:
+  _target_: ectil.callbacks.logging.LogOutput
