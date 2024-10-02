@@ -1,7 +1,6 @@
 from ectil.utils.pylogger import get_pylogger
 from ectil.utils.rich_utils import enforce_tags, print_config_tree
 from ectil.utils.utils import (
-    Dotdict,
     close_loggers,
     extras,
     get_metric_value,
