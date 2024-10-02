@@ -50,15 +50,15 @@ class LogTileLevelPrediction(ActOnEvaluationOutputCallback):
                 for region, model_meta, h5_path in zip(
                     output["regions"], output["model_meta"], output["h5_paths"]
                 ):
-                    tmp_df = pd.DataFrame(region, columns=["x", "y", "w", "h", "mpp"])
-                    tmp_df["tile_level_output"] = model_meta[
-                        "out_per_instance"
-                    ].squeeze(
-                        0
+                    tmp_df = pd.DataFrame(
+                        region.cpu(), columns=["x", "y", "w", "h", "mpp"]
+                    )
+                    tmp_df["tile_level_output"] = (
+                        model_meta["out_per_instance"].squeeze(0).cpu()
                     )  # the out_per_instance is 1 (batch) * variable(bag_size) * 1 (attention)
-                    tmp_df["attention_weights"] = model_meta[
-                        "attention_weights"
-                    ].squeeze(0)
+                    tmp_df["attention_weights"] = (
+                        model_meta["attention_weights"].squeeze(0).cpu()
+                    )
                     out_file = out_dir / h5_path / "tile_level_output.csv"
                     out_file.parent.mkdir(parents=True, exist_ok=True)
                     tmp_df.to_csv(out_file, index=False)
