@@ -73,7 +73,9 @@ def evaluate(cfg: DictConfig) -> Tuple[dict, dict]:
         # a full litmodule checkpoint that is loaded by the `trainer`
         weights = torch.load(
             cfg.ckpt_path,
-            map_location=torch.device(cfg.trainer.accelerator),
+            map_location=(
+                torch.device("cuda" if cgf.trainer.accelerator == "gpu" else "cpu")
+            ),
             weights_only=True,
         )
 
