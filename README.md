@@ -144,8 +144,8 @@ First extract features from your WSIs of interest, then provide the directory an
 E.g., after running [tools/extract/retccl/extract_retccl_tcga_bc.sh](tools/extract/retccl/extract_retccl_tcga_bc.sh), the h5s may be saved in `~/ectil/logs/extract/1970-01-01-00-00/....`. 
 ```sh
 cd ~/ectil/logs/extract/1970-01-01-00-00
-cat "paths" > paths.csv
-find . -name "*.h5" >> paths.csv
+echo "paths" > paths.csv
+find * -name "*.h5" >> paths.csv
 ```
 Now run inference with the following command (note that `~` may not always work properly, it is recommended to write out the full absolute path)
 ```
