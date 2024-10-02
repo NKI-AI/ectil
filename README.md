@@ -177,7 +177,7 @@ The `Rmd` script used to produce the cox regression results and the kaplan meier
 If you use ECTIL in your research, please use the following BiBTeX entry:
 
 ```bibtex
-@software{dlup,
+@software{ectil,
   author = {Schirris, Y},
   month = {9},
   title = {{ECTIL: Label-efficient Computational stromal TIL assessment model}},
