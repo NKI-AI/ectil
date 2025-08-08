@@ -181,7 +181,7 @@ If you use ECTIL in your research, please use the following BiBTeX entry:
   author = {Schirris, Y},
   month = {9},
   title = {{ECTIL: Label-efficient Computational stromal TIL assessment model}},
-  url = {https://github.com/YoniSchirris/ectil},
+  url = {https://github.com/nki-ai/ectil},
   version = {1.0.0},
   year = {2024}
 }
@@ -190,7 +190,7 @@ If you use ECTIL in your research, please use the following BiBTeX entry:
 or the following plain bibliography:
 
 ```
-Schirris, Y. (2024). ECTIL: Label-efficient Computational stromal TIL assessment model (Version 1.0.0) [Computer software]. https://github.com/YoniSchirris/ectil
+Schirris, Y. (2024). ECTIL: Label-efficient Computational stromal TIL assessment model (Version 1.0.0) [Computer software]. https://github.com/nki-ai/ectil
 ```
 
 
