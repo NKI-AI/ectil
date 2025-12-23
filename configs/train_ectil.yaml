@@ -1,0 +1,24 @@
+# @package _global_
+
+defaults:
+  - _self_
+  - datamodule: train_ectil_h5.yaml  # done
+  - model: h5_regression.yaml  # assume Yoni used default and no changes needed
+  - callbacks: default_regression.yaml  # assume Yoni used default and no changes needed
+  - logger: null
+  - trainer: default.yaml  # no changes needed
+  - paths: train_ectil_paths.yaml  # done, but not sure
+  - extras: default.yaml  # no changes needed, possibly disable python warnings
+  - hydra: default.yaml  # no changes needed, uses log dir
+  - variables: default.yaml  # assume Yoni used default and no changes needed
+  - experiment: null
+  - hparams_search: null
+  - optional local: default.yaml
+  - debug: null
+
+task_name: "train"
+tags: ["train"]
+train: True
+test: True
+ckpt_path: null
+seed: null

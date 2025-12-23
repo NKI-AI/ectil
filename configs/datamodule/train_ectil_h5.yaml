@@ -1,0 +1,11 @@
+_target_: ectil.datamodules.h5_datamodule.EctilH5DataModule
+root_dir: ${oc.env:FEAT_DIR}
+train_paths: ${paths.data_root_dir}/train_fold_${variables.fold}.csv 
+val_paths: ${paths.data_root_dir}/val_fold_${variables.fold}.csv 
+test_paths: ???  # consider adding Yoni's PARADIGM cohhort to verify training was correct.
+clini_file: "/projects/ectils_paradigm/wimildon/data/weakstil/clini/combined/20231121141533/combined_all/all_patients.csv"
+patient_column: "id"
+label_column: "gtruth"
+batch_size: 16
+num_workers: 2
+pin_memory: False
