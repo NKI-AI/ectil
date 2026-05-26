@@ -188,8 +188,13 @@ or in a container. Weights are not bundled in the image; mount them at runtime.
 Add `--gpus all` to `docker run` and `--device cuda` to the command for GPU. A
 runnable wrapper is provided in [tools/infer/infer_docker.sh](tools/infer/infer_docker.sh).
 
-For each slide a directory is written under the output dir containing:
-`tils_score.json` (final slide-level TIL score + run metadata),
+`--wsi` accepts either a single slide or a directory of slides (recursively
+globbed by extension, including `.mrxs`); failed slides are skipped and recorded
+rather than aborting the run. Each run writes a timestamped directory
+`<output>/<run_name>/` (override the name with `--run-name`) containing a
+`config.json`, an aggregate `tils_scores.csv` (one row per slide, for easy
+analysis), and a per-slide subdir with:
+`tils_score.json` (slide-level TIL score + full config),
 `tile_predictions.csv` (per-tile TIL score, attention weight, and region),
 `features.h5` (the generated dataset of RetCCL features + tile metadata),
 `thumbnail.png`, `mask.png`, `mask_overlay.png`, and the

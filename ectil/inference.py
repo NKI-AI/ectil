@@ -1,30 +1,45 @@
-"""End-to-end single-WSI inference for ECTIL.
+"""End-to-end WSI inference for ECTIL.
 
-Given a path to a whole-slide image (WSI) and a path to ECTIL classifier
-weights, this runs the full pipeline in one command:
+Given a whole-slide image (WSI) -- or a directory of WSIs -- and a path to
+ECTIL classifier weights, this runs the full pipeline in one command:
 
     tissue mask  ->  foreground tiling  ->  RetCCL features  ->  ECTIL
 
-and writes everything needed for practical/clinical use to an output dir:
+and writes everything needed for practical/clinical use into a timestamped run
+directory, with one subdir per slide and an aggregate scores table:
 
-    <output>/<slide_id>/
-        tils_score.json        final slide-level TIL score + run metadata
-        tile_predictions.csv    per-tile TIL score, attention weight, region
-        features.h5             the generated dataset (RetCCL features + tile meta)
-        thumbnail.png           plain slide thumbnail
-        mask.png                tissue mask used for tiling
-        mask_overlay.png        mask drawn on the thumbnail (sanity check)
-        attention_heatmap.png   per-tile attention painted on the thumbnail
-        til_heatmap.png         per-tile TIL score painted on the thumbnail
+    <output>/<run_name>/
+        config.json             full run configuration
+        tils_scores.csv         one row per slide (score, status) for easy analysis
+        <slide_id>/
+            tils_score.json     slide-level TIL score + full config
+            tile_predictions.csv per-tile TIL score, attention weight, region
+            features.h5         the generated dataset (RetCCL features + tile meta)
+            thumbnail.png       plain slide thumbnail
+            mask.png            tissue mask used for tiling
+            mask_overlay.png    mask drawn on the thumbnail (sanity check)
+            attention_heatmap.png per-tile attention painted on the thumbnail
+            til_heatmap.png     per-tile TIL score painted on the thumbnail
 
-RetCCL is loaded automatically; only the ECTIL classifier weights have to be
-provided explicitly. This reuses the same components as the training/extraction
-pipeline (DLUP tiling + FESI mask, RetCCL encoder, MeanMIL + GatedAttention),
-so results match `extract.py` + `eval.py`.
+`<run_name>` defaults to a timestamp (override with --run-name). RetCCL is
+loaded automatically; only the ECTIL classifier weights have to be provided
+explicitly. This reuses the same components as the training/extraction pipeline
+(DLUP tiling + FESI mask, RetCCL encoder, MeanMIL + GatedAttention), so results
+match `extract.py` + `eval.py`.
 
-Example:
+Batch mode skips slides it cannot process and records the failure in
+tils_scores.csv rather than aborting the whole run.
+
+Examples:
+    # single slide
     python -m ectil.inference \
         --wsi /input/slide.svs \
+        --classifier-weights /weights/ectil_fold_0_weights_only.ckpt \
+        --output /output
+
+    # a directory of slides (recursively globbed by extension)
+    python -m ectil.inference \
+        --wsi /input/cohort \
         --classifier-weights /weights/ectil_fold_0_weights_only.ckpt \
         --output /output
 """
@@ -300,37 +315,85 @@ def make_heatmap(
     plt.close(fig)
 
 
-def run_inference(args: argparse.Namespace) -> dict:
-    device = resolve_device(args.device)
-    wsi_path = Path(args.wsi).expanduser().resolve()
-    if not wsi_path.is_file():
-        raise FileNotFoundError(f"WSI not found: {wsi_path}")
+# Whole-slide formats globbed by default when --wsi points to a directory.
+# Note on MRXS: a `.mrxs` slide is the single file you open; it is accompanied by
+# a same-named directory of raw data. Globbing by extension matches the `.mrxs`
+# file (which dlup/openslide opens) and never the companion directory.
+DEFAULT_SLIDE_GLOB = "*.svs,*.tif,*.tiff,*.ndpi,*.mrxs,*.scn,*.svslide,*.bif"
 
-    retccl_weights = Path(args.retccl_weights).expanduser()
-    if not retccl_weights.is_file():
-        raise FileNotFoundError(
-            f"RetCCL weights not found at {retccl_weights}. Provide them via "
-            "--retccl-weights or the RETCCL_WEIGHTS env var (see model_zoo/retccl/readme.md)."
-        )
-    classifier_weights = Path(args.classifier_weights).expanduser()
-    if not classifier_weights.is_file():
-        raise FileNotFoundError(f"ECTIL classifier weights not found: {classifier_weights}")
 
+def discover_slides(input_path: Path, glob_patterns: str) -> list:
+    """Return the list of slide files for `input_path` (a file or a directory)."""
+    p = input_path.expanduser().resolve()
+    if p.is_file():
+        return [p]
+    if not p.is_dir():
+        raise FileNotFoundError(f"WSI path not found: {p}")
+
+    patterns = [pat.strip() for pat in glob_patterns.split(",") if pat.strip()]
+    slides: list = []
+    seen = set()
+    for pattern in patterns:
+        for match in sorted(p.rglob(pattern)):
+            if match.is_file() and match not in seen:
+                seen.add(match)
+                slides.append(match)
+    return slides
+
+
+def build_config(args: argparse.Namespace, device: torch.device, run_name: str) -> dict:
+    """All run configuration, embedded in each slide's JSON and the run config.json."""
+    return {
+        "run_name": run_name,
+        "device": str(device),
+        "mpp": args.mpp,
+        "tile_size": args.tile_size,
+        "mask_function": args.mask_function,
+        "mask_threshold": args.mask_threshold,
+        "batch_size": args.batch_size,
+        "num_workers": args.num_workers,
+        "heatmap_size": args.heatmap_size,
+        "in_features": args.in_features,
+        "hidden_features": args.hidden_features,
+        "attention_hidden_features": args.attention_hidden_features,
+        "classifier_weights": str(Path(args.classifier_weights).expanduser()),
+        "retccl_weights": str(Path(args.retccl_weights).expanduser()),
+    }
+
+
+def _unique_slide_dir(run_dir: Path, slide_id: str) -> Path:
+    """Per-slide output dir, suffixed if two input slides share a filename stem."""
+    out_dir = run_dir / slide_id
+    suffix = 1
+    while out_dir.exists():
+        out_dir = run_dir / f"{slide_id}_{suffix}"
+        suffix += 1
+    out_dir.mkdir(parents=True)
+    return out_dir
+
+
+def process_slide(
+    wsi_path: Path,
+    run_dir: Path,
+    encoder: RetCCL,
+    model: MeanMIL,
+    device: torch.device,
+    config: dict,
+    args: argparse.Namespace,
+) -> dict:
+    """Run the full pipeline for one slide and write its outputs. Returns a summary row."""
     slide_id = wsi_path.stem
-    out_dir = Path(args.output).expanduser() / slide_id
-    out_dir.mkdir(parents=True, exist_ok=True)
-    log.info(f"Running ECTIL inference on {wsi_path} (device={device})")
-    log.info(f"Writing outputs to {out_dir}")
+    out_dir = _unique_slide_dir(run_dir, slide_id)
+    log.info(f"[{slide_id}] writing outputs to {out_dir}")
 
     # 1. Tissue mask + thumbnail
     slide = SlideImage.from_file_path(wsi_path)
-    log.info(f"Computing tissue mask with '{args.mask_function}'")
+    log.info(f"[{slide_id}] computing tissue mask with '{args.mask_function}'")
     mask = compute_mask(slide=slide, mask_function=args.mask_function)
     save_thumbnail(slide=slide, out_dir=out_dir, size=args.heatmap_size)
     save_mask_images(slide=slide, mask=mask, out_dir=out_dir)
 
     # 2. Foreground tiling + RetCCL feature extraction
-    encoder = RetCCL(project_root_dir="", weights_path=str(retccl_weights))
     stacked, regions, _ = extract_features(
         slide_path=wsi_path,
         mask=mask,
@@ -346,14 +409,8 @@ def run_inference(args: argparse.Namespace) -> dict:
     n_tiles = features.shape[0]
 
     # 3. ECTIL classifier
-    model = build_ectil(
-        in_features=args.in_features,
-        hidden_features=args.hidden_features,
-        attention_hidden_features=args.attention_hidden_features,
-    )
-    load_ectil_weights(model, classifier_weights, device)
     score, til, attention = run_ectil(model, features, device)
-    log.info(f"Slide-level TIL score: {score:.4f} ({score * 100:.1f}%) over {n_tiles} tiles")
+    log.info(f"[{slide_id}] TIL score: {score:.4f} ({score * 100:.1f}%) over {n_tiles} tiles")
 
     # 4. Persist results
     out_regions = tile_regions_for_output(stacked, regions, n_tiles, args.mpp, args.tile_size)
@@ -368,13 +425,8 @@ def run_inference(args: argparse.Namespace) -> dict:
         "til_score": score,
         "til_score_percent": score * 100.0,
         "num_tiles": int(n_tiles),
-        "mpp": args.mpp,
-        "tile_size": args.tile_size,
-        "mask_function": args.mask_function,
-        "mask_threshold": args.mask_threshold,
-        "classifier_weights": str(classifier_weights),
-        "retccl_weights": str(retccl_weights),
-        "device": str(device),
+        "output_dir": str(out_dir),
+        **config,
     }
     with open(out_dir / "tils_score.json", "w") as f:
         json.dump(summary, f, indent=2)
@@ -404,24 +456,115 @@ def run_inference(args: argparse.Namespace) -> dict:
         vmax=1.0,
         cbar_label="tile TIL score",
     )
-
-    log.info("Done.")
     return summary
+
+
+def run_inference(args: argparse.Namespace) -> dict:
+    """Discover one or more slides, run ECTIL on each, and aggregate the results."""
+    import csv
+    from datetime import datetime
+
+    device = resolve_device(args.device)
+
+    retccl_weights = Path(args.retccl_weights).expanduser()
+    if not retccl_weights.is_file():
+        raise FileNotFoundError(
+            f"RetCCL weights not found at {retccl_weights}. Provide them via "
+            "--retccl-weights or the RETCCL_WEIGHTS env var (see model_zoo/retccl/readme.md)."
+        )
+    classifier_weights = Path(args.classifier_weights).expanduser()
+    if not classifier_weights.is_file():
+        raise FileNotFoundError(f"ECTIL classifier weights not found: {classifier_weights}")
+
+    slides = discover_slides(Path(args.wsi), args.glob)
+    if not slides:
+        raise FileNotFoundError(
+            f"No slides matching '{args.glob}' found under {args.wsi}"
+        )
+
+    run_name = args.run_name or datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    run_dir = Path(args.output).expanduser() / run_name
+    run_dir.mkdir(parents=True, exist_ok=True)
+    config = build_config(args, device, run_name)
+    with open(run_dir / "config.json", "w") as f:
+        json.dump({**config, "num_slides": len(slides)}, f, indent=2)
+    log.info(f"Found {len(slides)} slide(s); writing run to {run_dir} (device={device})")
+
+    # Load the encoder and classifier once and reuse them across all slides.
+    encoder = RetCCL(project_root_dir="", weights_path=str(retccl_weights)).to(device).eval()
+    model = build_ectil(
+        in_features=args.in_features,
+        hidden_features=args.hidden_features,
+        attention_hidden_features=args.attention_hidden_features,
+    )
+    load_ectil_weights(model, classifier_weights, device)
+    model = model.to(device).eval()
+
+    summary_path = run_dir / "tils_scores.csv"
+    fieldnames = [
+        "slide_id",
+        "slide_path",
+        "til_score",
+        "til_score_percent",
+        "num_tiles",
+        "status",
+        "error",
+        "output_dir",
+    ]
+    n_ok = 0
+    # Write the summary incrementally so partial results survive an interrupted batch.
+    with open(summary_path, "w", newline="") as summary_file:
+        writer = csv.DictWriter(summary_file, fieldnames=fieldnames, extrasaction="ignore")
+        writer.writeheader()
+        for i, wsi_path in enumerate(slides, start=1):
+            log.info(f"({i}/{len(slides)}) {wsi_path}")
+            try:
+                row = process_slide(wsi_path, run_dir, encoder, model, device, config, args)
+                row.update({"status": "ok", "error": ""})
+                n_ok += 1
+            except Exception as exc:  # keep going on per-slide failures
+                log.exception(f"Failed to process {wsi_path}: {exc}")
+                row = {
+                    "slide_id": wsi_path.stem,
+                    "slide_path": str(wsi_path),
+                    "status": "failed",
+                    "error": str(exc),
+                }
+            writer.writerow(row)
+            summary_file.flush()
+
+    log.info(f"Done. {n_ok}/{len(slides)} slide(s) succeeded. Summary: {summary_path}")
+    return {"run_dir": str(run_dir), "summary": str(summary_path), "n_ok": n_ok, "n_total": len(slides)}
 
 
 def parse_args(argv=None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Run end-to-end ECTIL TIL inference on a single WSI.",
+        description="Run end-to-end ECTIL TIL inference on a WSI or a directory of WSIs.",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
-    parser.add_argument("--wsi", required=True, help="Path to the whole-slide image.")
+    parser.add_argument(
+        "--wsi", required=True, help="Path to a WSI file or a directory of WSIs."
+    )
+    parser.add_argument(
+        "--glob",
+        default=DEFAULT_SLIDE_GLOB,
+        help="Comma-separated glob patterns used (recursively) when --wsi is a directory.",
+    )
     parser.add_argument(
         "--classifier-weights",
         required=True,
         help="Path to the ECTIL classifier weights (e.g. *_weights_only.ckpt).",
     )
     parser.add_argument(
-        "--output", "-o", required=True, help="Output directory (a per-slide subdir is created)."
+        "--output",
+        "-o",
+        required=True,
+        help="Output directory; a timestamped run subdir with per-slide subdirs is created.",
+    )
+    parser.add_argument(
+        "--run-name",
+        default=None,
+        help="Name of the run subdir under --output. Defaults to a timestamp.",
     )
     parser.add_argument(
         "--retccl-weights",

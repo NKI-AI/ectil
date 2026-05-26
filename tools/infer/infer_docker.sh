@@ -10,13 +10,18 @@
 #
 # 3. Set the paths below and run this script.
 #
-# The container writes a per-slide directory under $OUTPUT containing:
+# WSI may be a single slide OR a directory of slides (set WSI to the directory;
+# it is recursively globbed by extension, including .mrxs).
+#
+# The container writes a timestamped run dir under $OUTPUT containing
+# config.json, an aggregate tils_scores.csv, and a per-slide subdir with:
 #   tils_score.json, tile_predictions.csv, features.h5,
 #   thumbnail.png, mask.png, mask_overlay.png,
 #   attention_heatmap.png, til_heatmap.png
 
 set -euo pipefail
 
+# A single slide file, or a directory of slides.
 WSI="/path/to/slide.svs"
 CLASSIFIER_WEIGHTS="/path/to/ectil_fold_0_weights_only.ckpt"
 RETCCL_WEIGHTS="/path/to/retccl_best_ckpt.pth"
