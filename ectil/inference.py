@@ -45,6 +45,7 @@ Examples:
 """
 
 import argparse
+import csv
 import json
 import logging
 import os
@@ -60,6 +61,7 @@ import numpy as np
 import torch
 from dlup import SlideImage
 from dlup.tiling import GridOrder, TilingMode
+from PIL import Image
 from torch.nn import Identity, Linear, ReLU, Sequential, Sigmoid
 from torch.utils.data import DataLoader
 
@@ -71,6 +73,7 @@ from ectil.datamodules.components.dlup_dataset import (
 )
 from ectil.models.components import GatedAttention, MeanMIL, RetCCL
 from ectil.models.extraction_module import H5Writer
+from ectil.utils.background import AvailableMaskFunctions
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s"
@@ -132,17 +135,10 @@ def load_ectil_weights(model: MeanMIL, ckpt_path: Path, device: torch.device) ->
 
 def save_mask_images(slide: SlideImage, mask: np.ndarray, out_dir: Path) -> None:
     """Write a viewable tissue mask and a mask-on-thumbnail overlay."""
-    from PIL import Image
-
     mask_path = out_dir / "mask.png"
     Image.fromarray((mask.astype(np.uint8) * 255)).save(mask_path)
     # save_overlay derives `<stem>_overlay.png` next to mask_path, i.e. mask_overlay.png
     save_overlay(mask_path=mask_path, mask=mask, slide=slide)
-
-
-def save_thumbnail(slide: SlideImage, out_dir: Path, size: int) -> None:
-    thumb = slide.get_thumbnail(size=(size, size)).convert("RGB")
-    thumb.save(out_dir / "thumbnail.png")
 
 
 def extract_features(
@@ -155,6 +151,7 @@ def extract_features(
     mask_threshold: float,
     batch_size: int,
     num_workers: int,
+    overwrite_mpp: Optional[float] = None,
 ):
     """Tile the foreground and extract RetCCL features.
 
@@ -162,6 +159,11 @@ def extract_features(
     (x, y, w, h, mpp) aligned with the features, and the dataset.
     """
     transform = transform_factory("imagenet_normalization")
+    # `overwrite_mpp` is forwarded to dlup for slides that lack an embedded
+    # spacing (common for TCGA SVS); it sets the native micron-per-pixel so the
+    # requested tiling `mpp` can be resolved. Tiling is unaffected for slides
+    # that already carry a spacing.
+    extra = {"overwrite_mpp": (overwrite_mpp, overwrite_mpp)} if overwrite_mpp else {}
     dataset = DLUPDatasetWrapper.from_standard_tiling(
         path=slide_path,
         mpp=mpp,
@@ -174,6 +176,7 @@ def extract_features(
         mask=mask,
         mask_threshold=mask_threshold,
         limit_bounds=True,
+        **extra,
     )
     if len(dataset) == 0:
         raise RuntimeError(
@@ -262,8 +265,6 @@ def tile_regions_for_output(stacked: dict, regions: list, n_tiles: int, mpp: flo
 
 
 def save_tile_csv(out_path: Path, regions: np.ndarray, til: np.ndarray, attention: np.ndarray) -> None:
-    import csv
-
     with open(out_path, "w", newline="") as f:
         writer = csv.writer(f)
         writer.writerow(["x", "y", "w", "h", "mpp", "tile_level_output", "attention_weights"])
@@ -273,21 +274,20 @@ def save_tile_csv(out_path: Path, regions: np.ndarray, til: np.ndarray, attentio
 
 def make_heatmap(
     slide: SlideImage,
+    thumb: Image.Image,
     mpp: float,
     regions: np.ndarray,
     values: np.ndarray,
     title: str,
     out_path: Path,
     cmap: str,
-    size: int,
     vmin: Optional[float] = None,
     vmax: Optional[float] = None,
     cbar_label: str = "",
 ) -> None:
-    """Paint per-tile `values` onto the slide thumbnail and save as a PNG overlay."""
+    """Paint per-tile `values` onto the (pre-decoded) slide thumbnail and save as a PNG overlay."""
     scaling = slide.get_scaling(mpp)
     scaled_w, scaled_h = (np.asarray(slide.size, dtype=float) * scaling)
-    thumb = slide.get_thumbnail(size=(size, size)).convert("RGB")
     tw, th = thumb.size
     sx = tw / scaled_w
     sy = th / scaled_h
@@ -347,6 +347,7 @@ def build_config(args: argparse.Namespace, device: torch.device, run_name: str) 
         "run_name": run_name,
         "device": str(device),
         "mpp": args.mpp,
+        "overwrite_mpp": args.overwrite_mpp,
         "tile_size": args.tile_size,
         "mask_function": args.mask_function,
         "mask_threshold": args.mask_threshold,
@@ -386,11 +387,21 @@ def process_slide(
     out_dir = _unique_slide_dir(run_dir, slide_id)
     log.info(f"[{slide_id}] writing outputs to {out_dir}")
 
-    # 1. Tissue mask + thumbnail
-    slide = SlideImage.from_file_path(wsi_path)
+    # 1. Tissue mask + thumbnail. Decode the thumbnail once and reuse it for both
+    # the saved PNG and the two heatmap overlays below (a thumbnail decode reads and
+    # resamples a pyramid level, so it is the expensive part to avoid repeating).
+    # overwrite_mpp lets slides without an embedded spacing (e.g. many TCGA SVS)
+    # still be opened/tiled; dlup otherwise raises UnsupportedSlideError.
+    open_kwargs = (
+        {"overwrite_mpp": (args.overwrite_mpp, args.overwrite_mpp)}
+        if args.overwrite_mpp
+        else {}
+    )
+    slide = SlideImage.from_file_path(wsi_path, **open_kwargs)
     log.info(f"[{slide_id}] computing tissue mask with '{args.mask_function}'")
     mask = compute_mask(slide=slide, mask_function=args.mask_function)
-    save_thumbnail(slide=slide, out_dir=out_dir, size=args.heatmap_size)
+    thumb = slide.get_thumbnail(size=(args.heatmap_size, args.heatmap_size)).convert("RGB")
+    thumb.save(out_dir / "thumbnail.png")
     save_mask_images(slide=slide, mask=mask, out_dir=out_dir)
 
     # 2. Foreground tiling + RetCCL feature extraction
@@ -404,6 +415,7 @@ def process_slide(
         mask_threshold=args.mask_threshold,
         batch_size=args.batch_size,
         num_workers=args.num_workers,
+        overwrite_mpp=args.overwrite_mpp,
     )
     features = stacked["image"]
     n_tiles = features.shape[0]
@@ -434,24 +446,24 @@ def process_slide(
     # 5. Heatmaps
     make_heatmap(
         slide=slide,
+        thumb=thumb,
         mpp=args.mpp,
         regions=out_regions,
         values=attention,
         title=f"{slide_id} - attention",
         out_path=out_dir / "attention_heatmap.png",
         cmap="viridis",
-        size=args.heatmap_size,
         cbar_label="attention weight",
     )
     make_heatmap(
         slide=slide,
+        thumb=thumb,
         mpp=args.mpp,
         regions=out_regions,
         values=til,
         title=f"{slide_id} - tile-level TIL (slide score {score * 100:.1f}%)",
         out_path=out_dir / "til_heatmap.png",
         cmap="jet",
-        size=args.heatmap_size,
         vmin=0.0,
         vmax=1.0,
         cbar_label="tile TIL score",
@@ -575,11 +587,19 @@ def parse_args(argv=None) -> argparse.Namespace:
         "--device", default="auto", choices=["auto", "cpu", "cuda"], help="Compute device."
     )
     parser.add_argument("--mpp", type=float, default=0.5, help="Microns per pixel for tiling.")
+    parser.add_argument(
+        "--overwrite-mpp",
+        type=float,
+        default=None,
+        help="Native microns-per-pixel to assume when a slide has no embedded spacing "
+        "(e.g. many TCGA SVS). For TCGA-BRCA 40x diagnostic slides this is 0.25. "
+        "Leave unset to use the slide's own spacing.",
+    )
     parser.add_argument("--tile-size", type=int, default=512, help="Tile size in pixels.")
     parser.add_argument(
         "--mask-function",
         default="fesi",
-        choices=["fesi", "improved_fesi"],
+        choices=list(AvailableMaskFunctions.__members__),
         help="Tissue foreground segmentation function.",
     )
     parser.add_argument(
