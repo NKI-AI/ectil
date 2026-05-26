@@ -40,8 +40,15 @@ ENV CONDA_DEFAULT_ENV=ectil
 WORKDIR /app
 
 # Install Python dependencies first for better layer caching.
+# Pin the build toolchain as a matched set: an old pip (23.3.2) paired with a
+# newer setuptools whose `_core_metadata` calls `canonicalize_version(..., strip_trailing_zero=)`
+# needs a `packaging` >= 23.2 that actually has that kwarg, otherwise the editable
+# install of this package below dies with
+#   TypeError: canonicalize_version() got an unexpected keyword argument 'strip_trailing_zero'
+# Pinning setuptools/wheel/packaging together keeps the toolchain self-consistent.
 COPY requirements.txt setup.py ./
-RUN python -m pip install --no-cache-dir pip==23.3.2 \
+RUN python -m pip install --no-cache-dir \
+        pip==23.3.2 setuptools==69.5.1 wheel==0.43.0 packaging==24.0 \
     && python -m pip install --no-cache-dir -r requirements.txt
 
 # Install the ectil package itself.
