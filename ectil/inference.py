@@ -1,0 +1,466 @@
+"""End-to-end single-WSI inference for ECTIL.
+
+Given a path to a whole-slide image (WSI) and a path to ECTIL classifier
+weights, this runs the full pipeline in one command:
+
+    tissue mask  ->  foreground tiling  ->  RetCCL features  ->  ECTIL
+
+and writes everything needed for practical/clinical use to an output dir:
+
+    <output>/<slide_id>/
+        tils_score.json        final slide-level TIL score + run metadata
+        tile_predictions.csv    per-tile TIL score, attention weight, region
+        features.h5             the generated dataset (RetCCL features + tile meta)
+        thumbnail.png           plain slide thumbnail
+        mask.png                tissue mask used for tiling
+        mask_overlay.png        mask drawn on the thumbnail (sanity check)
+        attention_heatmap.png   per-tile attention painted on the thumbnail
+        til_heatmap.png         per-tile TIL score painted on the thumbnail
+
+RetCCL is loaded automatically; only the ECTIL classifier weights have to be
+provided explicitly. This reuses the same components as the training/extraction
+pipeline (DLUP tiling + FESI mask, RetCCL encoder, MeanMIL + GatedAttention),
+so results match `extract.py` + `eval.py`.
+
+Example:
+    python -m ectil.inference \
+        --wsi /input/slide.svs \
+        --classifier-weights /weights/ectil_fold_0_weights_only.ckpt \
+        --output /output
+"""
+
+import argparse
+import json
+import logging
+import os
+from pathlib import Path
+from typing import Optional
+
+import h5py
+import matplotlib
+
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt
+import numpy as np
+import torch
+from dlup import SlideImage
+from dlup.tiling import GridOrder, TilingMode
+from torch.nn import Identity, Linear, ReLU, Sequential, Sigmoid
+from torch.utils.data import DataLoader
+
+from ectil.datamodules.components.dlup_dataset import (
+    DLUPDatasetWrapper,
+    compute_mask,
+    save_overlay,
+    transform_factory,
+)
+from ectil.models.components import GatedAttention, MeanMIL, RetCCL
+from ectil.models.extraction_module import H5Writer
+
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s"
+)
+log = logging.getLogger("ectil.inference")
+
+# Default location of the RetCCL weights inside the repo / container.
+# Can be overridden with --retccl-weights or the RETCCL_WEIGHTS env var.
+DEFAULT_RETCCL_WEIGHTS = (
+    Path(__file__).resolve().parent.parent
+    / "model_zoo"
+    / "retccl"
+    / "retccl_best_ckpt.pth"
+)
+
+
+def resolve_device(device: str) -> torch.device:
+    if device == "auto":
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+    return torch.device(device)
+
+
+def build_ectil(
+    in_features: int,
+    hidden_features: int,
+    attention_hidden_features: int,
+) -> MeanMIL:
+    """Instantiate the ECTIL MeanMIL model.
+
+    The Identity() layers stand in for the Dropout layers used during training so
+    that the indices in the Sequential modules match the saved state dict keys.
+    """
+    return MeanMIL(
+        post_encoder=Sequential(
+            Identity(),
+            Identity(),
+            Linear(in_features=in_features, out_features=hidden_features, bias=True),
+            ReLU(),
+        ),
+        classifier=Sequential(
+            Identity(),
+            Identity(),
+            Linear(in_features=hidden_features, out_features=1, bias=True),
+            Sigmoid(),
+        ),
+        attention=GatedAttention(
+            in_features=hidden_features, hidden_features=attention_hidden_features
+        ),
+    ).eval()
+
+
+def load_ectil_weights(model: MeanMIL, ckpt_path: Path, device: torch.device) -> None:
+    weights = torch.load(ckpt_path, map_location=device, weights_only=True)
+    # Saved checkpoints are the `net` state dict of the LightningModule and keep a
+    # `net.` prefix; a plain torch model expects the prefix stripped.
+    weights = {k.replace("net.", "", 1): v for k, v in weights.items()}
+    model.load_state_dict(weights)
+
+
+def save_mask_images(slide: SlideImage, mask: np.ndarray, out_dir: Path) -> None:
+    """Write a viewable tissue mask and a mask-on-thumbnail overlay."""
+    from PIL import Image
+
+    mask_path = out_dir / "mask.png"
+    Image.fromarray((mask.astype(np.uint8) * 255)).save(mask_path)
+    # save_overlay derives `<stem>_overlay.png` next to mask_path, i.e. mask_overlay.png
+    save_overlay(mask_path=mask_path, mask=mask, slide=slide)
+
+
+def save_thumbnail(slide: SlideImage, out_dir: Path, size: int) -> None:
+    thumb = slide.get_thumbnail(size=(size, size)).convert("RGB")
+    thumb.save(out_dir / "thumbnail.png")
+
+
+def extract_features(
+    slide_path: Path,
+    mask: np.ndarray,
+    encoder: RetCCL,
+    device: torch.device,
+    mpp: float,
+    tile_size: int,
+    mask_threshold: float,
+    batch_size: int,
+    num_workers: int,
+):
+    """Tile the foreground and extract RetCCL features.
+
+    Returns the stacked per-tile outputs (numpy), the list of tile regions
+    (x, y, w, h, mpp) aligned with the features, and the dataset.
+    """
+    transform = transform_factory("imagenet_normalization")
+    dataset = DLUPDatasetWrapper.from_standard_tiling(
+        path=slide_path,
+        mpp=mpp,
+        tile_size=(tile_size, tile_size),
+        tile_overlap=(0, 0),
+        tile_mode=TilingMode.skip,
+        grid_order=GridOrder.C,
+        crop=False,
+        transform=transform,
+        mask=mask,
+        mask_threshold=mask_threshold,
+        limit_bounds=True,
+    )
+    if len(dataset) == 0:
+        raise RuntimeError(
+            "No foreground tiles were selected. The tissue mask may be empty; "
+            "try a different --mask-function or check the slide."
+        )
+
+    loader = DataLoader(
+        dataset=dataset, batch_size=batch_size, num_workers=num_workers, shuffle=False
+    )
+
+    outputs = []
+    encoder = encoder.to(device).eval()
+    log.info(f"Extracting RetCCL features for {len(dataset)} tiles")
+    with torch.no_grad():
+        for batch in loader:
+            batch["image"] = encoder(batch["image"].to(device)).cpu()
+            outputs.append(batch)
+
+    stacked = H5Writer(h5_root_dir="").stack_output(outputs)
+
+    # Regions (x, y, w, h, mpp) aligned with the masked tiles, same as extract.py.
+    regions = [
+        region
+        for idx, region in enumerate(dataset.regions)
+        if idx in set(dataset.masked_indices)
+    ]
+    return stacked, regions, dataset
+
+
+def run_ectil(model: MeanMIL, features: np.ndarray, device: torch.device):
+    model = model.to(device).eval()
+    x = torch.from_numpy(features).float().unsqueeze(0).to(device)  # 1 x n_tiles x dim
+    with torch.no_grad():
+        out = model(x)
+    score = float(out["out"].reshape(-1)[0].item())
+    til = out["meta"]["out_per_instance"].reshape(-1).cpu().numpy()
+    attention = out["meta"]["attention_weights"].reshape(-1).cpu().numpy()
+    return score, til, attention
+
+
+def save_features_h5(
+    out_path: Path,
+    stacked: dict,
+    regions: np.ndarray,
+    slide_id: str,
+    slide_path: Path,
+    til: np.ndarray,
+    attention: np.ndarray,
+) -> None:
+    with h5py.File(out_path, "w") as hf:
+        hf.create_dataset("features", data=stacked["image"])
+        if regions is not None and len(regions):
+            hf.create_dataset("regions", data=np.asarray(regions, dtype=float))
+        for key in [
+            "coordinates",
+            "mpp",
+            "region_index",
+            "grid_local_coordinates",
+            "grid_index",
+        ]:
+            if key in stacked:
+                hf.create_dataset(key, data=stacked[key])
+        hf.create_dataset("tile_level_output", data=til)
+        hf.create_dataset("attention_weights", data=attention)
+        hf.attrs["slide_id"] = slide_id
+        hf.attrs["path"] = str(slide_path)
+
+
+def tile_regions_for_output(stacked: dict, regions: list, n_tiles: int, mpp: float, tile_size: int):
+    """Return regions (x, y, w, h, mpp) guaranteed aligned with the n_tiles outputs.
+
+    Prefer the DLUP regions; if their count does not match (defensive), rebuild
+    them from the per-tile coordinates, which are always aligned with the features.
+    """
+    if len(regions) == n_tiles:
+        return np.asarray(regions, dtype=float)
+    coords = np.asarray(stacked["coordinates"], dtype=float)  # n x 2
+    rebuilt = np.zeros((n_tiles, 5), dtype=float)
+    rebuilt[:, 0] = coords[:, 0]
+    rebuilt[:, 1] = coords[:, 1]
+    rebuilt[:, 2] = tile_size
+    rebuilt[:, 3] = tile_size
+    rebuilt[:, 4] = mpp
+    return rebuilt
+
+
+def save_tile_csv(out_path: Path, regions: np.ndarray, til: np.ndarray, attention: np.ndarray) -> None:
+    import csv
+
+    with open(out_path, "w", newline="") as f:
+        writer = csv.writer(f)
+        writer.writerow(["x", "y", "w", "h", "mpp", "tile_level_output", "attention_weights"])
+        for r, t, a in zip(regions, til, attention):
+            writer.writerow([r[0], r[1], r[2], r[3], r[4], float(t), float(a)])
+
+
+def make_heatmap(
+    slide: SlideImage,
+    mpp: float,
+    regions: np.ndarray,
+    values: np.ndarray,
+    title: str,
+    out_path: Path,
+    cmap: str,
+    size: int,
+    vmin: Optional[float] = None,
+    vmax: Optional[float] = None,
+    cbar_label: str = "",
+) -> None:
+    """Paint per-tile `values` onto the slide thumbnail and save as a PNG overlay."""
+    scaling = slide.get_scaling(mpp)
+    scaled_w, scaled_h = (np.asarray(slide.size, dtype=float) * scaling)
+    thumb = slide.get_thumbnail(size=(size, size)).convert("RGB")
+    tw, th = thumb.size
+    sx = tw / scaled_w
+    sy = th / scaled_h
+
+    heat = np.full((th, tw), np.nan, dtype=float)
+    for (x, y, w, h, _), v in zip(regions, values):
+        x0, y0 = int(round(x * sx)), int(round(y * sy))
+        x1, y1 = int(round((x + w) * sx)), int(round((y + h) * sy))
+        x0, x1 = max(0, x0), min(tw, x1)
+        y0, y1 = max(0, y0), min(th, y1)
+        if x1 > x0 and y1 > y0:
+            heat[y0:y1, x0:x1] = v
+
+    fig, ax = plt.subplots(figsize=(tw / 100.0, th / 100.0), dpi=100)
+    ax.imshow(np.asarray(thumb))
+    im = ax.imshow(
+        np.ma.masked_invalid(heat), cmap=cmap, alpha=0.5, vmin=vmin, vmax=vmax
+    )
+    cbar = fig.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
+    if cbar_label:
+        cbar.set_label(cbar_label)
+    ax.set_title(title)
+    ax.axis("off")
+    fig.savefig(out_path, bbox_inches="tight")
+    plt.close(fig)
+
+
+def run_inference(args: argparse.Namespace) -> dict:
+    device = resolve_device(args.device)
+    wsi_path = Path(args.wsi).expanduser().resolve()
+    if not wsi_path.is_file():
+        raise FileNotFoundError(f"WSI not found: {wsi_path}")
+
+    retccl_weights = Path(args.retccl_weights).expanduser()
+    if not retccl_weights.is_file():
+        raise FileNotFoundError(
+            f"RetCCL weights not found at {retccl_weights}. Provide them via "
+            "--retccl-weights or the RETCCL_WEIGHTS env var (see model_zoo/retccl/readme.md)."
+        )
+    classifier_weights = Path(args.classifier_weights).expanduser()
+    if not classifier_weights.is_file():
+        raise FileNotFoundError(f"ECTIL classifier weights not found: {classifier_weights}")
+
+    slide_id = wsi_path.stem
+    out_dir = Path(args.output).expanduser() / slide_id
+    out_dir.mkdir(parents=True, exist_ok=True)
+    log.info(f"Running ECTIL inference on {wsi_path} (device={device})")
+    log.info(f"Writing outputs to {out_dir}")
+
+    # 1. Tissue mask + thumbnail
+    slide = SlideImage.from_file_path(wsi_path)
+    log.info(f"Computing tissue mask with '{args.mask_function}'")
+    mask = compute_mask(slide=slide, mask_function=args.mask_function)
+    save_thumbnail(slide=slide, out_dir=out_dir, size=args.heatmap_size)
+    save_mask_images(slide=slide, mask=mask, out_dir=out_dir)
+
+    # 2. Foreground tiling + RetCCL feature extraction
+    encoder = RetCCL(project_root_dir="", weights_path=str(retccl_weights))
+    stacked, regions, _ = extract_features(
+        slide_path=wsi_path,
+        mask=mask,
+        encoder=encoder,
+        device=device,
+        mpp=args.mpp,
+        tile_size=args.tile_size,
+        mask_threshold=args.mask_threshold,
+        batch_size=args.batch_size,
+        num_workers=args.num_workers,
+    )
+    features = stacked["image"]
+    n_tiles = features.shape[0]
+
+    # 3. ECTIL classifier
+    model = build_ectil(
+        in_features=args.in_features,
+        hidden_features=args.hidden_features,
+        attention_hidden_features=args.attention_hidden_features,
+    )
+    load_ectil_weights(model, classifier_weights, device)
+    score, til, attention = run_ectil(model, features, device)
+    log.info(f"Slide-level TIL score: {score:.4f} ({score * 100:.1f}%) over {n_tiles} tiles")
+
+    # 4. Persist results
+    out_regions = tile_regions_for_output(stacked, regions, n_tiles, args.mpp, args.tile_size)
+    save_features_h5(
+        out_dir / "features.h5", stacked, out_regions, slide_id, wsi_path, til, attention
+    )
+    save_tile_csv(out_dir / "tile_predictions.csv", out_regions, til, attention)
+
+    summary = {
+        "slide_id": slide_id,
+        "slide_path": str(wsi_path),
+        "til_score": score,
+        "til_score_percent": score * 100.0,
+        "num_tiles": int(n_tiles),
+        "mpp": args.mpp,
+        "tile_size": args.tile_size,
+        "mask_function": args.mask_function,
+        "mask_threshold": args.mask_threshold,
+        "classifier_weights": str(classifier_weights),
+        "retccl_weights": str(retccl_weights),
+        "device": str(device),
+    }
+    with open(out_dir / "tils_score.json", "w") as f:
+        json.dump(summary, f, indent=2)
+
+    # 5. Heatmaps
+    make_heatmap(
+        slide=slide,
+        mpp=args.mpp,
+        regions=out_regions,
+        values=attention,
+        title=f"{slide_id} - attention",
+        out_path=out_dir / "attention_heatmap.png",
+        cmap="viridis",
+        size=args.heatmap_size,
+        cbar_label="attention weight",
+    )
+    make_heatmap(
+        slide=slide,
+        mpp=args.mpp,
+        regions=out_regions,
+        values=til,
+        title=f"{slide_id} - tile-level TIL (slide score {score * 100:.1f}%)",
+        out_path=out_dir / "til_heatmap.png",
+        cmap="jet",
+        size=args.heatmap_size,
+        vmin=0.0,
+        vmax=1.0,
+        cbar_label="tile TIL score",
+    )
+
+    log.info("Done.")
+    return summary
+
+
+def parse_args(argv=None) -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        description="Run end-to-end ECTIL TIL inference on a single WSI.",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+    )
+    parser.add_argument("--wsi", required=True, help="Path to the whole-slide image.")
+    parser.add_argument(
+        "--classifier-weights",
+        required=True,
+        help="Path to the ECTIL classifier weights (e.g. *_weights_only.ckpt).",
+    )
+    parser.add_argument(
+        "--output", "-o", required=True, help="Output directory (a per-slide subdir is created)."
+    )
+    parser.add_argument(
+        "--retccl-weights",
+        default=os.environ.get("RETCCL_WEIGHTS", str(DEFAULT_RETCCL_WEIGHTS)),
+        help="Path to RetCCL weights. Auto-loaded from model_zoo / RETCCL_WEIGHTS by default.",
+    )
+    parser.add_argument(
+        "--device", default="auto", choices=["auto", "cpu", "cuda"], help="Compute device."
+    )
+    parser.add_argument("--mpp", type=float, default=0.5, help="Microns per pixel for tiling.")
+    parser.add_argument("--tile-size", type=int, default=512, help="Tile size in pixels.")
+    parser.add_argument(
+        "--mask-function",
+        default="fesi",
+        choices=["fesi", "improved_fesi"],
+        help="Tissue foreground segmentation function.",
+    )
+    parser.add_argument(
+        "--mask-threshold",
+        type=float,
+        default=0.1,
+        help="Minimum foreground fraction for a tile to be kept.",
+    )
+    parser.add_argument("--batch-size", type=int, default=16, help="RetCCL extraction batch size.")
+    parser.add_argument("--num-workers", type=int, default=0, help="DataLoader workers.")
+    parser.add_argument(
+        "--heatmap-size", type=int, default=2048, help="Long-edge size of thumbnails/heatmaps."
+    )
+    parser.add_argument("--in-features", type=int, default=2048, help="RetCCL feature dimension.")
+    parser.add_argument("--hidden-features", type=int, default=512, help="ECTIL hidden dimension.")
+    parser.add_argument(
+        "--attention-hidden-features", type=int, default=128, help="Attention hidden dimension."
+    )
+    return parser.parse_args(argv)
+
+
+def main(argv=None) -> None:
+    run_inference(parse_args(argv))
+
+
+if __name__ == "__main__":
+    main()

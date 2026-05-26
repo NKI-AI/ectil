@@ -157,6 +157,44 @@ Now run inference with the following command (note that `~` may not always work 
     datamodule.test_paths=~/ectil/logs/extract/1970-01-01-00-00/paths.csv
 ```
 
+### One-command inference with Docker
+
+For practical/clinical usage, a single entry point runs the whole pipeline
+(tissue mask → foreground tiling → RetCCL features → ECTIL) on one WSI. RetCCL
+is loaded automatically; you only pass the WSI and the ECTIL classifier weights.
+
+It can be run directly:
+```sh
+~/ectil$ python -m ectil.inference \
+    --wsi /path/to/slide.svs \
+    --classifier-weights model_zoo/ectil/tcga/fold_0/epoch_065_step_858_weights_only.ckpt \
+    --retccl-weights model_zoo/retccl/retccl_best_ckpt.pth \
+    --output /path/to/output
+```
+
+or in a container. Weights are not bundled in the image; mount them at runtime.
+```sh
+~/ectil$ docker build -t ectil-inference .
+~/ectil$ docker run --rm \
+    -v /path/to/slides:/input:ro \
+    -v /path/to/weights:/weights:ro \
+    -v /path/to/output:/output \
+    ectil-inference \
+        --wsi /input/slide.svs \
+        --classifier-weights /weights/ectil_fold_0_weights_only.ckpt \
+        --retccl-weights /weights/retccl_best_ckpt.pth \
+        --output /output
+```
+Add `--gpus all` to `docker run` and `--device cuda` to the command for GPU. A
+runnable wrapper is provided in [tools/infer/infer_docker.sh](tools/infer/infer_docker.sh).
+
+For each slide a directory is written under the output dir containing:
+`tils_score.json` (final slide-level TIL score + run metadata),
+`tile_predictions.csv` (per-tile TIL score, attention weight, and region),
+`features.h5` (the generated dataset of RetCCL features + tile metadata),
+`thumbnail.png`, `mask.png`, `mask_overlay.png`, and the
+`attention_heatmap.png` / `til_heatmap.png` overlays.
+
 ### Analysis
 The results on the 5-fold test folds on TCGA are found in [logs/tcga_output](logs/tcga_output/). To produce a calibration plot, scatter plot, and detailed metrics, run 
 
