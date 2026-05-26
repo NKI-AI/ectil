@@ -12,7 +12,7 @@ setup(
     description="ECTIL: Label-efficient Computational Tumour Infiltrating Lymphocyte (TIL) assessment in breast cancer",
     author="Yoni Schirris",
     author_email="yschirris@gmail.com",
-    url="https://github.com/YoniSchirris/ectil",
+    url="https://github.com/nki-ai/ectil",
     install_requires=["pytorch-lightning", "hydra-core"],
     packages=find_packages(),
 )
