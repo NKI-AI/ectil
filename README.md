@@ -36,20 +36,31 @@ The end-to-end entry point [`ectil/inference.py`](ectil/inference.py) runs the w
 
 Weights are not bundled in the image; mount them at runtime.
 
+Either pull the pre-built image from GitHub Container Registry, or build it locally:
+
 ```bash
-~/ectil$ docker build -t ectil-inference .
+# Option A — pull (linux/amd64). :latest tracks main; pin a release tag for reproducibility.
+~$ docker pull ghcr.io/nki-ai/ectil-inference:latest
+
+# Option B — build from the repo.
+~/ectil$ docker build -t ghcr.io/nki-ai/ectil-inference:latest .
+```
+
+Then run:
+
+```bash
 ~/ectil$ docker run --rm \
     -v /path/to/slides:/input:ro \
     -v /path/to/weights:/weights:ro \
     -v /path/to/output:/output \
-    ectil-inference \
+    ghcr.io/nki-ai/ectil-inference:latest \
         --wsi /input/slide.svs \
         --classifier-weights /weights/ectil_fold_0_weights_only.ckpt \
         --retccl-weights /weights/retccl_best_ckpt.pth \
         --output /output
 ```
 
-Add `--gpus all` to `docker run` and `--device cuda` to the command for GPU. A runnable wrapper is provided in [`tools/infer/infer_docker.sh`](tools/infer/infer_docker.sh).
+Add `--gpus all` to `docker run` and `--device cuda` to the command for GPU. A runnable wrapper is provided in [`tools/infer/infer_docker.sh`](tools/infer/infer_docker.sh). Published image tags are listed at [ghcr.io/nki-ai/ectil-inference](https://github.com/NKI-AI/ectil/pkgs/container/ectil-inference): `:latest` follows `main`, `:vX.Y.Z` is published on git tags, and `:sha-<short>` exists per commit for forensic pinning.
 
 ### Directly, without Docker
 

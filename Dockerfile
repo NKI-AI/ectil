@@ -1,14 +1,16 @@
 # ECTIL inference image.
 #
-# Build:
-#   docker build -t ectil-inference .
+# Get the image — either pull the published one or build it yourself:
+#   docker pull ghcr.io/nki-ai/ectil-inference:latest
+#   # or
+#   docker build -t ghcr.io/nki-ai/ectil-inference:latest .
 #
 # Run (mount the WSI, the weights, and an output directory):
 #   docker run --rm \
 #     -v /path/to/slides:/input:ro \
 #     -v /path/to/weights:/weights:ro \
 #     -v /path/to/output:/output \
-#     ectil-inference \
+#     ghcr.io/nki-ai/ectil-inference:latest \
 #       --wsi /input/slide.svs \
 #       --classifier-weights /weights/ectil_fold_0_weights_only.ckpt \
 #       --retccl-weights /weights/retccl_best_ckpt.pth \

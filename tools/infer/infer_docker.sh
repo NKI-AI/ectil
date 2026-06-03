@@ -1,8 +1,10 @@
 #!/bin/bash
 # Example: run ECTIL inference on a single WSI inside the Docker container.
 #
-# 1. Build the image (from the repo root):
-#       docker build -t ectil-inference .
+# 1. Get the image — either pull the published one or build it yourself:
+#       docker pull ghcr.io/nki-ai/ectil-inference:latest
+#       # or
+#       docker build -t ghcr.io/nki-ai/ectil-inference:latest .
 #
 # 2. Download the weights (not bundled in the image):
 #       - ECTIL classifier: https://files.aiforoncology.nl/ectil  (model_zoo/ectil/tcga/readme.md)
@@ -32,7 +34,7 @@ docker run --rm \
     -v "$(dirname "$CLASSIFIER_WEIGHTS")":/weights/ectil:ro \
     -v "$(dirname "$RETCCL_WEIGHTS")":/weights/retccl:ro \
     -v "$OUTPUT":/output \
-    ectil-inference \
+    ghcr.io/nki-ai/ectil-inference:latest \
         --wsi "/input/$(basename "$WSI")" \
         --classifier-weights "/weights/ectil/$(basename "$CLASSIFIER_WEIGHTS")" \
         --retccl-weights "/weights/retccl/$(basename "$RETCCL_WEIGHTS")" \
