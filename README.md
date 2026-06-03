@@ -12,78 +12,143 @@
 
 ## Description
 
+This is the repository with code related to the paper
 
+**ECTIL: Label-efficient Computational Tumour Infiltrating Lymphocyte (TIL) assessment in breast cancer: Multicentre validation in 2,340 patients with breast cancer" (publication and DOI pending)**.
 
-This is the repository with code related to the paper 
-
-**ECTIL: Label-efficient Computational Tumour Infiltrating Lymphocyte (TIL) assessment in breast cancer: Multicentre validation in 2,340 patients with breast cancer" (publication and DOI pending)**. 
-
-Below we show how to reproduce training, validation, and internal testing on the TCGA cohort. The trained model is available in the model zoo, and a script is available to infer the model on any WSI. Additionally, a minimal example is provided to use a pre-trained ECTIL model in your own custom pipeline. Main scripts to reproduce the analyses in the manuscript are also available.
+ECTIL scores stromal TILs directly from a breast cancer whole-slide image (WSI): tissue mask → foreground tiling → RetCCL feature extraction → ECTIL regression. The trained models are available in the [model zoo](model_zoo/ectil/tcga/readme.md). The sections below cover running inference on your own slides, integrating ECTIL into your own pipeline, and reproducing the manuscript results on the TCGA cohort.
 
 ![Main model figure of ECTIL](static/images/model_figure.jpg)
 
-## Main files of interest
+## Quick start: infer on a WSI
 
-### TILs scores
-The TILs scores for TCGA samples are available under [data/clini/tcga_bc_tils.csv](data/clini/tcga_bc_tils.csv), and may be used in future research.
+The end-to-end entry point [`ectil/inference.py`](ectil/inference.py) runs the whole pipeline on a WSI (tissue mask → foreground tiling → RetCCL features → ECTIL). RetCCL is loaded automatically; you only provide the WSI and the ECTIL classifier weights. Download the weights first: [ECTIL classifier](model_zoo/ectil/tcga/readme.md) and [RetCCL encoder](model_zoo/retccl/readme.md).
 
-### Scripts for preprocessing and feature extraction
-The scripts for foreground selection and tile- and feature extraction is provided, and can be run with [tools/extract/retccl/extract_retccl_tcga_bc.sh](tools/extract/retccl/extract_retccl_tcga_bc.sh)
+### Easiest: end-to-end smoke test
 
-### Using a pre-trained ECTIL model on external WSIs
-- To download the pre-trained ECTIL models, read [model_zoo/ectil/tcga/readme.md](model_zoo/ectil/tcga/readme.md)
-- A minimal example of running inference of a pre-trained TILs regression model on patches of a WSI is provided in [tools/infer/minimal_example.py](tools/infer/minimal_example.py), which may be adjusted for your own pipeline
-- The configuration and bash scripts for running inference on a collection of WSIs for which features are extracted with [tools/extract/retccl/extract_retccl_tcga_bc.sh](tools/extract/retccl/extract_retccl_tcga_bc.sh) is available in [tools/infer/infer_tcga_retccl_external.sh](tools/infer/infer_tcga_retccl_external.sh)
+[`tools/infer/run_demo.sh`](tools/infer/run_demo.sh) downloads the RetCCL and ECTIL weights and a handful of public TCGA-BRCA slides, builds the Docker image, runs both single-slide and directory inference, and checks the outputs. Run it to confirm your setup works end to end:
 
-### Reproducing training, validation, and testing
-- The center-level folds used in the experiments presented in the paper are found in [data/clini/tcga_bc_folds.csv](data/clini/tcga_bc_folds.csv)
-- The configuration and bash scripts for training, validation, and testing on TCGA is provided, and can be run with [tools/train/train_evaluate_test_tcga_retccl_internal.sh](tools/train/train_evaluate_test_tcga_retccl_internal.sh)
+```bash
+~/ectil$ ./tools/infer/run_demo.sh
+```
 
-### Analyses
-The scripts for the analyses are found in [tools/analysis](tools/analysis), which produce the main metrics and figures for the output on test folds of TCGA, found at [logs/tcga_output](logs/tcga_output)
+### One WSI with Docker (no local Python needed)
 
-## How to run
-### Install dependencies
+Weights are not bundled in the image; mount them at runtime.
+
+Either pull the pre-built image from GitHub Container Registry, or build it locally:
+
+```bash
+# Option A — pull (linux/amd64). :latest tracks main; pin a release tag for reproducibility.
+~$ docker pull ghcr.io/nki-ai/ectil-inference:latest
+
+# Option B — build from the repo.
+~/ectil$ docker build -t ghcr.io/nki-ai/ectil-inference:latest .
+```
+
+Then run:
+
+```bash
+~/ectil$ docker run --rm \
+    -v /path/to/slides:/input:ro \
+    -v /path/to/weights:/weights:ro \
+    -v /path/to/output:/output \
+    ghcr.io/nki-ai/ectil-inference:latest \
+        --wsi /input/slide.svs \
+        --classifier-weights /weights/ectil_fold_0_weights_only.ckpt \
+        --retccl-weights /weights/retccl_best_ckpt.pth \
+        --output /output
+```
+
+Add `--gpus all` to `docker run` and `--device cuda` to the command for GPU. A runnable wrapper is provided in [`tools/infer/infer_docker.sh`](tools/infer/infer_docker.sh). Published image tags are listed at [ghcr.io/nki-ai/ectil-inference](https://github.com/NKI-AI/ectil/pkgs/container/ectil-inference): `:latest` follows `main`, `:vX.Y.Z` is published on git tags, and `:sha-<short>` exists per commit for forensic pinning.
+
+### Directly, without Docker
+
+After [installing the dependencies](#installation):
+
+```bash
+~/ectil$ python -m ectil.inference \
+    --wsi /path/to/slide.svs \
+    --classifier-weights model_zoo/ectil/tcga/fold_0/epoch_065_step_858_weights_only.ckpt \
+    --retccl-weights model_zoo/retccl/retccl_best_ckpt.pth \
+    --output /path/to/output
+```
+
+> **Slides without an embedded spacing** (many TCGA SVS) otherwise raise `UnsupportedSlideError`. Pass `--overwrite-mpp 0.25` (the native micron-per-pixel of TCGA 40x diagnostic slides) to set the spacing explicitly.
+
+`--wsi` accepts either a single slide or a directory of slides (recursively globbed by extension, including `.mrxs`); failed slides are skipped and recorded rather than aborting the run.
+
+### What you get
+
+Each run writes a timestamped directory `<output>/<run_name>/` (override the name with `--run-name`) containing a `config.json`, an aggregate `tils_scores.csv` (one row per slide, for easy analysis), and a per-slide subdir with:
+
+- `tils_score.json` — slide-level TIL score + full config
+- `tile_predictions.csv` — per-tile TIL score, attention weight, and region
+- `features.h5` — the generated dataset of RetCCL features + tile metadata
+- `thumbnail.png`, `mask.png`, `mask_overlay.png`
+- `attention_heatmap.png`, `til_heatmap.png`
+
+## Use a pre-trained ECTIL model in your own pipeline
+
+A minimal, framework-agnostic example of running a pre-trained ECTIL regressor on patch features is provided in [`tools/infer/minimal_example.py`](tools/infer/minimal_example.py); adapt it to your own pipeline. To download the pre-trained models, see [`model_zoo/ectil/tcga/readme.md`](model_zoo/ectil/tcga/readme.md).
+
+## Installation
+
+[RECOMMENDED] Use conda — it greatly simplifies installing openslide and pixman.
+
 ```bash
 # clone project
-git clone https://github.com/YoniSchirris/ectil
+git clone https://github.com/nki-ai/ectil
 cd ectil
 
-# [RECOMMENDED] create conda environment; this greatly simplifies installation of openslide and pixman 
+# create conda environment
 conda create -n ectil python=3.10.9
 conda activate ectil
-pip install pip==23.3.2 # Required for older version of pytorch-lightning that was used during this project
+pip install pip==23.3.2  # required for the older pytorch-lightning used in this project
 
-conda install conda-forge::openslide #  Required for DLUP for loading WSIs
-conda install conda-forge::pixman # Requires for DLUP for loading WSIs. Should be included in openslide
-conda install conda-forge::libvips # Required for DLUP for loading WSIs
+# system libraries required by DLUP for loading WSIs
+conda install conda-forge::openslide
+conda install conda-forge::pixman   # usually pulled in by openslide
+conda install conda-forge::libvips
 
-# install pytorch according to instructions
-# https://pytorch.org/get-started/ # We use Stable (2.4.1+cu121) on linux for development and training on HPC)
+# install PyTorch per the official instructions:
+# https://pytorch.org/get-started/  (we use 2.4.1+cu121 on Linux for development/training on HPC)
 
-# install requirements
+# install ectil and its requirements
 python -m pip install .
 python -m pip install -r requirements.txt
 ```
 
-### Preprocessing: Feature extraction
-Automatically perform foreground selection, extract patches, extract features with RetCCL, and save them in `h5` format. A working example is presented in [tools/extract/retccl/extract_retccl_tcga_bc.sh](tools/extract/retccl/extract_retccl_tcga_bc.sh)
+Docker users can skip this — the image builds the environment for you.
 
-To reproduce the TCGA experiments, first download the slides from the GDC repository to `/path/to/your/data/dir`, and download the RetCCL model (see [model_zoo/retccl/readme.md](model_zoo/retccl/readme.md))
+## Reproduce the manuscript (TCGA)
 
-E.g. extract RetCCL features from all `*.svs` files in the directory `/path/to/your/data/dir` on a small cpu with only the main thread and a relatively small batch size and write the h5 files to `/your/log/dir`.
+<details>
+<summary><b>Data, feature extraction, training, evaluation, and analysis on the TCGA cohort</b></summary>
 
-Rename [.env.example](.env.example) to `.env` and set 
+### Data and TILs scores
+
+- The TILs scores for TCGA samples are in [`data/clini/tcga_bc_tils.csv`](data/clini/tcga_bc_tils.csv) and may be used in future research.
+- The center-level folds used in the experiments are in [`data/clini/tcga_bc_folds.csv`](data/clini/tcga_bc_folds.csv).
+
+### Feature extraction
+
+Automatically perform foreground selection, extract patches, extract RetCCL features, and save them as `h5`. A working example is [`tools/extract/retccl/extract_retccl_tcga_bc.sh`](tools/extract/retccl/extract_retccl_tcga_bc.sh).
+
+First download the slides from the GDC repository to `/path/to/your/data/dir`, and download the RetCCL model (see [`model_zoo/retccl/readme.md`](model_zoo/retccl/readme.md)).
+
+Rename [`.env.example`](.env.example) to `.env` and set:
 ```bash
 TCGA_BRCA_IMAGES_ROOT="/path/to/your/data_dir"
-TCGA_BRCA_H5_ROOT_DIR="/your/log/dir" 
+TCGA_BRCA_H5_ROOT_DIR="/your/log/dir"
 ```
 
+E.g. extract RetCCL features from all `*.svs` files in a directory on a small CPU with a single worker and a relatively small batch size, writing the `h5` files to your log dir:
 ```bash
-# path to data dir and log dir can also be set in the CLI of ectil
+# paths to the data dir and log dir can also be set in the CLI
 ~/ectil$ python ectil/extract.py \
     experiment=ectil/extract/tcga_retccl \
-    task_name=ectil_extract
+    task_name=ectil_extract \
     datamodule.num_workers=0 \
     datamodule.batch_size=16 \
     trainer=cpu \
@@ -91,86 +156,73 @@ TCGA_BRCA_H5_ROOT_DIR="/your/log/dir"
     datamodule.image_glob='**/*.svs' \
     model.h5_writer.h5_root_dir='/your/preferred/log/dir'
 ```
-
-If a gpu is available, set `trainer=gpu`.
-
-If `/path/to/your/dir` contains more slides than you want to extract features for, you can add 
+Set `trainer=gpu` if a GPU is available. To extract only a subset of slides, add:
 ```bash
 +datamodule.image_paths_file=/path/to/file.txt
 ```
-where `file.txt` contains, for each WSI of interest, an **absolute** path (which should be located in a subdirectory of `datamodule.image_root_dir`) on each row.
+where `file.txt` lists one **absolute** path per WSI of interest (each located under a subdirectory of `datamodule.image_root_dir`). The log directory also gets a thumbnail-with-mask PNG.
 
-The log directory will also contain a png with a thumbnail with mask.
+### Train, validate, and test
 
+Notes:
+- The first training epoch may take longer than subsequent ones.
+- For reproducibility on any hardware: on a CPU with `num_workers=0`, ~10 s per epoch of training and validation (25 epochs in ~10 min); a GPU with more workers is faster.
+- Training curves are logged to TensorBoard; best metrics and hparams to MLflow.
 
-### Train, validation, and testing on TCGA
-- Note that the first training epoch may take longer than subsequent epochs.
-- As a test for reproducibility on any hardware, we noticed that on a CPU with `num_workers=0` it takes ~10 seconds per epoch of training and validation (25 epochs in ~10 minutes), which can be improved by using a GPU with more workers.
-- Logs training curves on tensorboard
-- Logs best metrics and hparams on mlflow
-
-E.g. to train-validate-test on the first fold of breast cancer samples from TCGA on a cpu with no additional workers (bare minimum hardware requirements), set the `datamodule.root_dir` to the path where your `h5`s are saved (this is not static due to timestamp versioning)
-
-```sh
-python ectil/train.py \
-  experiment=ectil/train/tcga/train_val.yaml \
+E.g. to train-validate-test on the first TCGA breast cancer fold on a CPU with no additional workers (bare-minimum hardware), set `datamodule.root_dir` to where your `h5`s are saved (this path is timestamp-versioned):
+```bash
+~/ectil$ python ectil/train.py \
+    experiment=ectil/train/tcga/train_val.yaml \
     task_name=ectil_train_val_test \
     datamodule.num_workers=0 \
     datamodule.root_dir='/path/to/h5s/in/v/yyyy-mm-dd-ss-ms' \
     trainer=cpu
 ```
+A full train-validate-test driver is in [`tools/train/train_evaluate_test_tcga_retccl_internal.sh`](tools/train/train_evaluate_test_tcga_retccl_internal.sh).
 
-To view training curves, plots, and final metrics, run
-
+View training curves, plots, and final metrics with:
 ```bash
 tensorboard --logdir=/your/log/dir
 ```
-
-and view the results in your localhost under the `scalars` and `images` tab.
-
-Results of a hyperparameter search is better viewed through mlflow, which can be started with
+under the `scalars` and `images` tabs. Hyperparameter searches are better viewed in MLflow:
 ```bash
 mlflow ui --backend-store-uri file:///path/to/your/logs/mlflow
 ```
 
-### Infer on any WSI
+### Infer on pre-extracted features
 
-A minimal example to add ECTIL to your own pipeline is provided in [tools/infer/minimal_example.py](tools/infer/minimal_example.py).
+To run a trained ECTIL model on an `h5` of already-extracted features (1 or more slides), use [`tools/infer/infer_tcga_retccl_external.sh`](tools/infer/infer_tcga_retccl_external.sh). First extract features (above), then provide the directory and relative paths to the `h5` files when calling `eval.py`.
 
-An example to run inference on an `h5` of already extracted features of 1 or multiple slides is provided in [tools/infer/infer_tcga_retccl_external.sh]([tools/infer/infer_tcga_retccl_external.sh]).
-
-First extract features from your WSIs of interest, then provide the directory and relative pathnames to these `h5` files when calling `eval.py`.
-
-E.g., after running [tools/extract/retccl/extract_retccl_tcga_bc.sh](tools/extract/retccl/extract_retccl_tcga_bc.sh), the h5s may be saved in `~/ectil/logs/extract/1970-01-01-00-00/....`. 
-```sh
+E.g. after running the extraction, the h5s might be saved in `~/ectil/logs/extract/1970-01-01-00-00/...`:
+```bash
 cd ~/ectil/logs/extract/1970-01-01-00-00
 echo "paths" > paths.csv
 find * -name "*.h5" >> paths.csv
 ```
-Now run inference with the following command (note that `~` may not always work properly, it is recommended to write out the full absolute path)
-```
+Then run inference (write out the full absolute path; `~` may not expand correctly here):
+```bash
 ~/ectil$ python ectil/eval.py \
     ckpt_path=model_zoo/ectil/tcga/fold_0/epoch_065_step_858_weights_only.ckpt \
     trainer=cpu \
     datamodule.num_workers=0 \
-    datamodule.root_dir=~/ectil/logs/extract/1970-01-01-00-00
+    datamodule.root_dir=~/ectil/logs/extract/1970-01-01-00-00 \
     datamodule.test_paths=~/ectil/logs/extract/1970-01-01-00-00/paths.csv
 ```
 
 ### Analysis
-The results on the 5-fold test folds on TCGA are found in [logs/tcga_output](logs/tcga_output/). To produce a calibration plot, scatter plot, and detailed metrics, run 
 
-```sh
+The results on the 5-fold test folds on TCGA are in [`logs/tcga_output`](logs/tcga_output/). To produce a calibration plot, scatter plot, and detailed metrics (reproducing the manuscript results on TCGA):
+```bash
 ~/ectil$ python -m tools.analysis.calibration_curve.create_calibration_curve
 ~/ectil$ python -m tools.analysis.scatter_plot.create_scatter_plot
 ~/ectil$ python -m tools.analysis.metrics.compute_metrics
 ```
 
-which will reproduce the results as presented in the manuscript on TCGA.
-
 ### Prognostic analysis
-The `Rmd` script used to produce the cox regression results and the kaplan meier plots can be found under [tools/analysis/prognostic/prognostic_analysis.Rmd](tools/analysis/prognostic/prognostic_analysis.Rmd). This script is for illustration purposes only, since the raw data to produce the regressions and km plots can not be shared.
 
+The `Rmd` script used to produce the Cox regression results and the Kaplan-Meier plots is at [`tools/analysis/prognostic/prognostic_analysis.Rmd`](tools/analysis/prognostic/prognostic_analysis.Rmd). It is for illustration purposes only, since the raw data behind the regressions and KM plots cannot be shared.
+
+</details>
 
 ## Citation
 
@@ -192,5 +244,3 @@ or the following plain bibliography:
 ```
 Schirris, Y. (2024). ECTIL: Label-efficient Computational stromal TIL assessment model (Version 1.0.0) [Computer software]. https://github.com/nki-ai/ectil
 ```
-
-

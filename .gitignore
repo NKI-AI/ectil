@@ -1,6 +1,7 @@
 # project specific
 pyrightconfig.json
 data/wsi
+data/inference_output
 model_zoo/**/*.ckpt
 model_zoo/**/*.pth
 tmp

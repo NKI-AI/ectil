@@ -1,0 +1,14 @@
+.git
+.gitignore
+logs
+static
+data/wsi
+tmp
+**/__pycache__/
+*.pyc
+*.egg-info
+.env
+.venv
+.pytest_cache
+.idea
+.vscode
