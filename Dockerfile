@@ -22,7 +22,11 @@
 # If --retccl-weights is omitted it defaults to /app/model_zoo/retccl/retccl_best_ckpt.pth
 # or the RETCCL_WEIGHTS environment variable.
 
-FROM continuumio/miniconda3:latest
+# Pinned (not :latest) so the build is reproducible. The :latest tag moved to
+# conda 26.x in April 2026, where the conda-forge solve for the WSI libs below
+# can drag GraalPy into the env and break the pip install of torch==2.4.1
+# ("Could not find a version that satisfies the requirement torch==2.4.1").
+FROM continuumio/miniconda3:24.11.1-0
 
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update \
@@ -30,7 +34,11 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 
 # Python 3.10.9 plus the WSI system libraries via conda-forge (mirrors README install).
-RUN conda create -y -n ectil python=3.10.9 \
+# Force the CPython build of python and keep it pinned across the second install
+# so newer conda solvers can't swap it for graalpy when resolving conda-forge deps
+# (that swap silently breaks the torch==2.4.1 pip install in the next layer).
+RUN conda create -y -n ectil -c conda-forge "python=3.10.9=*_cpython" \
+    && echo "python 3.10.9" > /opt/conda/envs/ectil/conda-meta/pinned \
     && conda install -y -n ectil -c conda-forge openslide pixman libvips \
     && conda clean -afy
 
